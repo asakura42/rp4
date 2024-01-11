@@ -23,3 +23,7 @@ TODO:
 - aicg proxy parsing (do I really need it?)
 
 Any improvements, issues, thoughts and pull requests will be appreciated.
+
+===
+
+*Gabriela from settings.json example taken from https://www.chub.ai/characters/summernon/practice-spanish-with-gabriela*
