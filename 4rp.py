@@ -325,7 +325,7 @@ class ChatGUI(QWidget):
         self.base_url_field = QLineEdit(self)
         self.base_url_field.setText(self.chatgpt_client.base_url)
         self.base_url_field.textChanged.connect(self.update_base_url)
-        roleplay_layout.addWidget(QLabel("Base URL:"))
+        roleplay_layout.addWidget(QLabel("Base URL (should end with 'v1'):"))
         roleplay_layout.addWidget(self.base_url_field)
 
         self.api_key_field = QLineEdit(self)
