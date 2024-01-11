@@ -14,6 +14,8 @@ pip install g4f requests markdown2 pyqt5
 python 4rp.py
 ```
 
+The program uses [https://github.com/xtekky/gpt4free](gpt4free) library or your own OpenAI-compatible completions API.
+
 This program was written for the my own use and is still in development, so it may not always work the way the user expects. For example, if the model does not change, simply close and reopen the program. To delete preset, edit file `settings.json` manually.
 
 TODO:
