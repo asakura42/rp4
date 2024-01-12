@@ -215,8 +215,11 @@ class ChatGPTClient:
             data = {
                 "model": self.model,
                 "messages": self.chat_history,
-                "max_tokens": 18000,
-                "temperature": 0.7,
+                "max_tokens": 1000,
+                "frequency_penalty": 0.7,
+                "temperature": 0.9,
+                "presence_penalty": 0.7,
+                "top_p": 1,
                 "stream": True
             }
             response = requests.post(self.base_url + "/chat/completions", json=data, headers=headers, stream=True)
@@ -226,10 +229,12 @@ class ChatGPTClient:
             for line in response.iter_lines():
                 if line:
                     decoded_line = line.decode('utf-8')
-                    if decoded_line.startswith('data:'):
-                        json_line = json.loads(decoded_line[5:])
-                        content = json_line.get('choices', [{}])[0].get('delta', {}).get('content', '')
-                        assistant_response += content
+                    if decoded_line == 'data: [DONE]':
+                       break
+                    elif decoded_line.startswith('data:'):
+                            json_line = json.loads(decoded_line[5:].strip())
+                            content = json_line.get('choices', [{}])[0].get('delta', {}).get('content', '')
+                            assistant_response += content
 
         if response:
             try:
@@ -618,11 +623,6 @@ def main():
         global_settings = json.load(file)
 
     api_key = global_settings.get('api_key', '')
-    if not api_key:
-        print("API key not found in global_settings.json. Please check the file.")
-        return
-
-
 
     chatgpt_client = ChatGPTClient(api_key)
 
