@@ -79,15 +79,15 @@ def generate_theme_style(bg_color, text_color, border_color, button_hover_color,
     QScrollBar:vertical {{
         border: none;
         background: {bg_color};
-        width: 10px;
+        width: 2px;
         margin: 15px 0 15px 0;
         border-radius: 0px;
     }}
 
     QScrollBar::handle:vertical {{
         background-color: {scrollbar_handle_color};
-        min-height: 30px;
-        border-radius: 7px;
+        min-height: 50px;
+        border-radius: 1px;
     }}
 
     QScrollBar::handle:vertical:hover{{
