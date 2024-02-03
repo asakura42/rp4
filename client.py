@@ -1,15 +1,12 @@
 import dataclasses
 import json
 import pathlib
+import shutil
 import typing
 from pprint import pprint
 
 import g4f
 import requests
-
-THIS_FILE_DIR = pathlib.Path(__file__).parent
-GLOBAL_SETTINGS_FILE_PATH = THIS_FILE_DIR / 'global_settings.json'
-PRESETS_SETTINGS_FILE_PATH = THIS_FILE_DIR / 'settings.json'
 
 
 @dataclasses.dataclass
@@ -46,20 +43,36 @@ class FetchError(requests.RequestException):
 
 class ChatGPTClient:
     def __init__(self,
-                 globals_file_path: str = GLOBAL_SETTINGS_FILE_PATH,
-                 presets_file_path: str = PRESETS_SETTINGS_FILE_PATH,
+                 globals_file_path: str | None = None,
+                 presets_file_path: str | None = None,
                  **kwargs):
-        # global settings
+        # create a config folder and copy default config files
         self.globals_file_path = globals_file_path
+        self.presets_file_path = presets_file_path
+        self.deploy_default_configs()
+        # global settings
         self.globals = GlobalSettings()
         self.set_kwargs(kwargs)
         self.load_global_settings(globals_file_path)
         # presets
-        self.presets_file_path = presets_file_path
         self.presets = {"Assistant": Preset()}
         self.load_presets(presets_file_path)
         # history
         self.chat_history: list[ChatHistoryEntry] = []
+
+    def deploy_default_configs(self):
+        default_config_dir = pathlib.Path(__file__).parent / "defaults"
+        assert default_config_dir.is_dir()
+        config_home_dir = pathlib.Path.home() / ".config" / "4rp"
+        if not self.globals_file_path:
+            self.globals_file_path = config_home_dir / "global_settings.json"
+            self.globals_file_path.parent.mkdir(parents=True, exist_ok=True)
+        if not self.presets_file_path:
+            self.presets_file_path = config_home_dir / "settings.json"
+            self.presets_file_path.parent.mkdir(parents=True, exist_ok=True)
+        for cfg_file in (self.globals_file_path, self.presets_file_path):
+            if not cfg_file.is_file():
+                shutil.copyfile(src=default_config_dir / cfg_file.name, dst=cfg_file, )
 
     def save_global_settings(self):
         with open(self.globals_file_path, 'w', encoding="utf-8") as of:
