@@ -4,5 +4,12 @@
     "base_url": "https://juan-finite-suddenly-volume.trycloudflare.com/proxy/azure/openai/v1",
     "model": "gpt-4-32k",
     "theme": "Light",
-    "verbose": false
+    "verbose": false,
+    "model_names": [
+        "gpt-4",
+        "gpt-4-0613",
+        "gpt-4-0314",
+        "gpt-4-32k",
+        "gpt-4-32k-0613"
+    ]
 }

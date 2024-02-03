@@ -5,7 +5,7 @@ import markdown2
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from PyQt6.QtWidgets import *
 
-from client import ChatGPTClient, Preset
+from client import ChatGPTClient, Preset, FetchError
 
 
 def generate_theme_style(bg_color, text_color, border_color, button_hover_color, button_pressed_color,
@@ -184,7 +184,7 @@ class ChatGUI(QWidget):
         self.input_entry.returnPressed.connect(self.send_message)
         chat_layout.addWidget(self.input_entry)
 
-        self.font_size = 15
+        self.font_size = 16
 
         self.increase_font_button = QPushButton("+", self)
         self.increase_font_button.setFixedSize(32, 32)
@@ -237,6 +237,13 @@ class ChatGUI(QWidget):
         roleplay_layout.addWidget(QLabel("Select Theme:"))
         roleplay_layout.addWidget(self.theme_dropdown)
 
+        # model dropdown (gpt-4, etc.)
+        self.model_dropdown = QComboBox(self)
+        roleplay_layout.addWidget(QLabel("Select Model:"))
+        roleplay_layout.addWidget(self.model_dropdown)
+        self.populate_model_dropdown()
+        self.model_dropdown.currentTextChanged.connect(self.update_model)
+
         # HR
         hline = QFrame(self)
         hline.setObjectName("line")
@@ -244,12 +251,6 @@ class ChatGUI(QWidget):
         hline.setFrameShadow(QFrame.Shadow.Sunken)
         hline.setMinimumSize(50, 4)
         roleplay_layout.addWidget(hline)
-
-        self.model_dropdown = QComboBox(self)
-        self.populate_model_dropdown()
-        roleplay_layout.addWidget(QLabel("Select Model:"))
-        roleplay_layout.addWidget(self.model_dropdown)
-        self.model_dropdown.currentTextChanged.connect(self.update_model)
 
         roleplay_layout.addWidget(QLabel("System Prompt:"))
         self.system_prompt1 = QTextEdit(self)
@@ -321,9 +322,11 @@ class ChatGUI(QWidget):
             self.font_size -= 1
             self.messages_text.setStyleSheet(f"font-size: {self.font_size}px")
 
-    def update_base_url(self, base_url):
-        self.chatgpt_client.globals.base_url = base_url
-        self.chatgpt_client.save_global_settings()
+    def update_base_url(self, base_url: str):
+        if base_url and base_url != self.chatgpt_client.globals.base_url:
+            self.chatgpt_client.globals.base_url = base_url
+            self.populate_model_dropdown(new_base_url=True)
+            self.chatgpt_client.save_global_settings()
 
     def update_model(self, model):
         self.chatgpt_client.globals.model = model
@@ -417,22 +420,27 @@ class ChatGUI(QWidget):
             self.preset_dropdown.setCurrentText(new_preset_name)
             self.chatgpt_client.save_presets_to_disk()
 
-    def fetch_and_populate_models(self):
+    def populate_model_dropdown(self, new_base_url: bool = False):
         self.model_dropdown.clear()
-        self.model_dropdown.addItems(self.chatgpt_client.fetch_model_names())
-
-    def populate_model_dropdown(self):
-        self.model_dropdown.clear()
-
         if self.chatgpt_client.globals.api_type == "gpt4free":
             models = [
                 'gpt-3.5-turbo-16k',
                 'gpt-4-turbo',
             ]
-            for model in models:
-                self.model_dropdown.addItem(model)
+            self.model_dropdown.addItems(models)
         elif self.chatgpt_client.globals.api_type == "URL_JSON_API":
-            self.fetch_and_populate_models()
+            try:
+                self.model_dropdown.addItems(
+                    self.chatgpt_client.globals.model_names
+                    if (self.chatgpt_client.globals.model_names and new_base_url is False)
+                    else self.chatgpt_client.fetch_model_names()
+                )
+            except FetchError as ex:
+                print(ex)
+        self.chatgpt_client.globals.model_names = [
+            self.model_dropdown.itemText(item)
+            for item in range(self.model_dropdown.count())
+        ]
         self.model_dropdown.setCurrentText(self.chatgpt_client.globals.model)
 
     def send_message(self):
@@ -466,11 +474,10 @@ class ChatGUI(QWidget):
         event.accept()
 
 
-def main():
-    chatgpt_client = ChatGPTClient()
+def main(chatgpt_client: ChatGPTClient | None = None):
     app = QApplication(sys.argv)
     app.setStyleSheet(warm_theme_style)  # DEFAULT THEME
-    chat_gui = ChatGUI(chatgpt_client, app)
+    chat_gui = ChatGUI(chatgpt_client or ChatGPTClient(), app)
     chat_gui.setWindowTitle("4rp")
     chat_gui.setGeometry(100, 100, 400, 600)
     chat_gui.show()

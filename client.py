@@ -18,6 +18,7 @@ class GlobalSettings:
     model: str = "gpt-4"  # todo deprecate
     theme: str = "Light"
     verbose: bool = False
+    model_names: list[str] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass
@@ -35,6 +36,10 @@ class Preset:
 class ChatHistoryEntry(typing.TypedDict):
     role: str
     content: str
+
+
+class FetchError(requests.RequestException):
+    pass
 
 
 class ChatGPTClient:
@@ -89,9 +94,11 @@ class ChatGPTClient:
         if preset.system_prompt2:
             self.chat_history.append({"role": "system", "content": preset.system_prompt2})
         if preset.character_description:
-            self.chat_history.append({"role": "system", "content": "AI CHARACTER DESCRIPTION:\\n" + preset.character_description})
+            self.chat_history.append(
+                {"role": "system", "content": "AI CHARACTER DESCRIPTION:\\n" + preset.character_description})
         if preset.example_chat:
-            self.chat_history.append({"role": "system", "content": "EXAMPLE CHAT WITH THIS CHARACTER:\\n" + preset.example_chat})
+            self.chat_history.append(
+                {"role": "system", "content": "EXAMPLE CHAT WITH THIS CHARACTER:\\n" + preset.example_chat})
         if preset.world_lore:
             self.chat_history.append({"role": "system", "content": "WORLD LORE:\\n" + preset.world_lore})
         if preset.first_ai_message:
@@ -177,8 +184,15 @@ class ChatGPTClient:
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.globals.api_key}"
         }
-        response = requests.get(url, headers=headers)
-        if self.globals.verbose:
-            pprint(response.json(), indent=2)
-        models = response.json().get('data', [])
-        return [model['id'] for model in models]
+        try:
+            response = requests.get(url, headers=headers, timeout=25)
+            response.raise_for_status()
+            json_data = response.json()
+            if self.globals.verbose:
+                pprint(json_data, indent=2)
+        except Exception as ex:
+            if self.globals.verbose:
+                print(ex)
+            raise FetchError("Couldn't get model names") from ex
+        else:
+            return [model['id'] for model in json_data.get('data', [])]

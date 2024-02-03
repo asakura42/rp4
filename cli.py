@@ -1,7 +1,6 @@
 import argparse
 from client import ChatGPTClient
-
-rp = __import__('4rp')
+import gui
 
 def main():
     parser = argparse.ArgumentParser(description='CLI interface.', usage="Send messages to the server.")
@@ -23,7 +22,7 @@ def main():
         case argparse.Namespace() if (args.ask_question and args.set_preset):
             return print(client.send_message(args.ask_question, args.set_preset))
         case argparse.Namespace(launch_gui=True):
-            return rp.main()
+            return gui.main(client)
         case _:
             return parser.print_help()
 
