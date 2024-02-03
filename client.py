@@ -1,13 +1,15 @@
 import dataclasses
 import json
+import pathlib
 import typing
 from pprint import pprint
 
 import g4f
 import requests
 
-GLOBAL_SETTINGS_FILE_PATH = 'global_settings.json'
-PRESETS_SETTINGS_FILE_PATH = 'settings.json'
+THIS_FILE_DIR = pathlib.Path(__file__).parent
+GLOBAL_SETTINGS_FILE_PATH = THIS_FILE_DIR / 'global_settings.json'
+PRESETS_SETTINGS_FILE_PATH = THIS_FILE_DIR / 'settings.json'
 
 
 @dataclasses.dataclass
@@ -15,10 +17,11 @@ class GlobalSettings:
     api_type: str = "URL_JSON_API"
     api_key: str = "desu"
     base_url: str = "https://juan-finite-suddenly-volume.trycloudflare.com/proxy/azure/openai/v1"
-    model: str = "gpt-4"  # todo deprecate
+    selected_model: str = "gpt-4"
     theme: str = "Light"
     verbose: bool = False
     model_names: list[str] = dataclasses.field(default_factory=list)
+    selected_preset: str = ""
 
 
 @dataclasses.dataclass
@@ -30,7 +33,6 @@ class Preset:
     first_ai_message: str = ""
     example_chat: str = ""
     world_lore: str = ""
-    model: str = "gpt-4"
 
 
 class ChatHistoryEntry(typing.TypedDict):
@@ -85,9 +87,6 @@ class ChatGPTClient:
 
     def construct_initial_chat_history(self, preset_name: str):
         preset = self.presets.get(preset_name, Preset())
-        if preset.model:
-            # todo remove
-            self.globals.model = preset.model
 
         if preset.system_prompt1:
             self.chat_history.append({"role": "system", "content": preset.system_prompt1})
@@ -119,7 +118,7 @@ class ChatGPTClient:
 
         if self.globals.api_type == "gpt4free":
             response = g4f.ChatCompletion.create(
-                model=self.globals.model,
+                model=self.globals.selected_model,
                 messages=self.chat_history,
             )
             assistant_response = response
@@ -129,7 +128,7 @@ class ChatGPTClient:
                 "Authorization": f"Bearer {self.globals.api_key}"
             }
             data = {
-                "model": self.globals.model,
+                "model": self.globals.selected_model,
                 "messages": self.chat_history,
                 "max_tokens": 1000,
                 "frequency_penalty": 0.7,
