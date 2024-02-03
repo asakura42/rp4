@@ -84,14 +84,18 @@ class ChatGPTClient:
             # todo remove
             self.globals.model = preset.model
 
-        self.chat_history.extend([
-            {"role": "system", "content": preset.system_prompt1},
-            {"role": "system", "content": preset.system_prompt2},
-            {"role": "system", "content": "AI CHARACTER DESCRIPTION:\\n" + preset.character_description},
-            {"role": "system", "content": "EXAMPLE CHAT WITH THIS CHARACTER:\\n" + preset.example_chat},
-            {"role": "system", "content": "WORLD LORE:\\n" + preset.world_lore},
-            {"role": "assistant", "content": preset.first_ai_message},
-        ])
+        if preset.system_prompt1:
+            self.chat_history.append({"role": "system", "content": preset.system_prompt1})
+        if preset.system_prompt2:
+            self.chat_history.append({"role": "system", "content": preset.system_prompt2})
+        if preset.character_description:
+            self.chat_history.append({"role": "system", "content": "AI CHARACTER DESCRIPTION:\\n" + preset.character_description})
+        if preset.example_chat:
+            self.chat_history.append({"role": "system", "content": "EXAMPLE CHAT WITH THIS CHARACTER:\\n" + preset.example_chat})
+        if preset.world_lore:
+            self.chat_history.append({"role": "system", "content": "WORLD LORE:\\n" + preset.world_lore})
+        if preset.first_ai_message:
+            self.chat_history.append({"role": "assistant", "content": preset.first_ai_message})
 
     def send_message(self, user_message: str, preset_name: str):
         response = None
@@ -103,7 +107,8 @@ class ChatGPTClient:
         self.chat_history.append({"role": "user", "content": user_message})
 
         preset = self.presets.get(preset_name, Preset())
-        self.chat_history.append({"role": "system", "content": preset.system_prompt3})
+        if preset.system_prompt3:
+            self.chat_history.append({"role": "system", "content": preset.system_prompt3})
 
         if self.globals.api_type == "gpt4free":
             response = g4f.ChatCompletion.create(
