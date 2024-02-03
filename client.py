@@ -66,12 +66,11 @@ class ChatGPTClient:
         config_home_dir = pathlib.Path.home() / ".config" / "4rp"
         if not self.globals_file_path:
             self.globals_file_path = config_home_dir / "global_settings.json"
-            self.globals_file_path.parent.mkdir(parents=True, exist_ok=True)
         if not self.presets_file_path:
             self.presets_file_path = config_home_dir / "settings.json"
-            self.presets_file_path.parent.mkdir(parents=True, exist_ok=True)
         for cfg_file in (self.globals_file_path, self.presets_file_path):
             if not cfg_file.is_file():
+                cfg_file.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(src=default_config_dir / cfg_file.name, dst=cfg_file, )
 
     def save_global_settings(self):
