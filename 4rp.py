@@ -282,7 +282,7 @@ class ChatGUI(QWidget):
         roleplay_layout.addLayout(hbox)
         self.preset_dropdown = QComboBox(self)
         self.preset_dropdown.currentIndexChanged.connect(self.apply_preset)
-        # self.preset_dropdown.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Preferred)
+        self.preset_dropdown.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Preferred)
         hbox.addWidget(QLabel("Select Preset:"))
         hbox.addWidget(self.preset_dropdown)
         self.add_btn = QPushButton("+")
