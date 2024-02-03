@@ -1,14 +1,18 @@
-import sys
-import g4f
-import re
-import requests
 import json
-import markdown2
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QScrollArea, QMessageBox, QTextEdit, QLineEdit, QPushButton, QComboBox, QLabel, QSizePolicy, QFrame
-from PyQt5.QtCore import QThread, pyqtSignal, Qt
-from PyQt5.QtGui import QTextCursor
+import re
+import sys
 
-def generate_theme_style(bg_color, text_color, border_color, button_hover_color, button_pressed_color, scrollbar_handle_color, scrollbar_handle_hover_color, line_color):
+import g4f
+import markdown2
+import requests
+from PyQt6.QtCore import QThread, pyqtSignal, Qt
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QScrollArea, QMessageBox, QTextEdit, \
+    QLineEdit, QPushButton, QComboBox, QLabel, QFrame
+from PyQt6.QtWidgets import QInputDialog
+
+
+def generate_theme_style(bg_color, text_color, border_color, button_hover_color, button_pressed_color,
+                         scrollbar_handle_color, scrollbar_handle_hover_color, line_color):
     return f"""
     QWidget {{
         background-color: {bg_color};
@@ -105,11 +109,17 @@ def generate_theme_style(bg_color, text_color, border_color, button_hover_color,
     }}
     """
 
-warm_theme_style = generate_theme_style("#1F2937", "#F1FAEE", "#E07A5F", "#E07A5F", "#D62828", "#E07A5F", "#D62828", "#E07A5F")
-dark_monokai_theme_style = generate_theme_style("#272822", "#F8F8F2", "#F8F8F2", "#75715E", "#49483E", "#75715E", "#49483E", "#F8F8F2")
-gruvbox_theme_style = generate_theme_style("#282828", "#EBDBB2", "#EBDBB2", "#504945", "#665C54", "#504945", "#665C54", "#EBDBB2")
-light_theme_style = generate_theme_style("#FFFFFF", "#000000", "#000000", "#C0C0C0", "#808080", "#888", "#555", "#000000")
-dark_theme_style = generate_theme_style("#2b2b2b", "#a9b7c6", "#214283", "#4e5b6e", "#214283", "#888", "#555", "#214283")
+
+warm_theme_style = generate_theme_style("#1F2937", "#F1FAEE", "#E07A5F", "#E07A5F", "#D62828", "#E07A5F", "#D62828",
+                                        "#E07A5F")
+dark_monokai_theme_style = generate_theme_style("#272822", "#F8F8F2", "#F8F8F2", "#75715E", "#49483E", "#75715E",
+                                                "#49483E", "#F8F8F2")
+gruvbox_theme_style = generate_theme_style("#282828", "#EBDBB2", "#EBDBB2", "#504945", "#665C54", "#504945", "#665C54",
+                                           "#EBDBB2")
+light_theme_style = generate_theme_style("#FFFFFF", "#000000", "#000000", "#C0C0C0", "#808080", "#888", "#555",
+                                         "#000000")
+dark_theme_style = generate_theme_style("#2b2b2b", "#a9b7c6", "#214283", "#4e5b6e", "#214283", "#888", "#555",
+                                        "#214283")
 
 
 class Worker(QThread):
@@ -130,13 +140,13 @@ class Worker(QThread):
         except Exception as e:
             self.finished.emit(f"An error occurred: {e}")
 
+
 class ChatGPTClient:
-    def __init__(self, api_key, model="gpt-3.5-turbo-16k", settings_file='settings.json', api_type="gpt4free"):
+    def __init__(self, api_key="desu", model="gpt-3.5-turbo-16k", settings_file='settings.json', api_type="gpt4free"):
         self.model = model
         self.chat_history = []
         self.settings = self.load_settings(settings_file)
         self.load_global_settings()
-
 
     def save_global_settings(self, settings_file='global_settings.json'):
         global_settings = {
@@ -146,8 +156,8 @@ class ChatGPTClient:
             'api_key': self.api_key,
             'model': self.model
         }
-        with open(settings_file, 'w') as file:
-            json.dump(global_settings, file)
+        with open(settings_file, 'w', encoding="utf-8") as file:
+            json.dump(global_settings, file, indent=4, ensure_ascii=False)
 
     def load_global_settings(self, settings_file='global_settings.json'):
         try:
@@ -192,6 +202,8 @@ class ChatGPTClient:
         ])
 
     def send_message(self, user_message, preset_name):
+        response = None
+
         if not self.chat_history:
             self.construct_initial_chat_history(preset_name)
 
@@ -230,11 +242,11 @@ class ChatGPTClient:
                 if line:
                     decoded_line = line.decode('utf-8')
                     if decoded_line == 'data: [DONE]':
-                       break
+                        break
                     elif decoded_line.startswith('data:'):
-                            json_line = json.loads(decoded_line[5:].strip())
-                            content = json_line.get('choices', [{}])[0].get('delta', {}).get('content', '')
-                            assistant_response += content
+                        json_line = json.loads(decoded_line[5:].strip())
+                        content = json_line.get('choices', [{}])[0].get('delta', {}).get('content', '')
+                        assistant_response += content
 
         if response:
             try:
@@ -246,12 +258,14 @@ class ChatGPTClient:
 
         return assistant_response
 
+
 class EnterLineEdit(QLineEdit):
     def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Return:
+        if event.key() == Qt.Key.Key_Return:
             self.returnPressed.emit()
         else:
             super().keyPressEvent(event)
+
 
 class ChatGUI(QWidget):
     def __init__(self, chatgpt_client, app):
@@ -275,7 +289,6 @@ class ChatGUI(QWidget):
         self.chatgpt_client.theme = theme
         self.chatgpt_client.save_global_settings()
 
-
     def update_api_type(self, api_type):
         self.chatgpt_client.api_type = api_type
         self.populate_model_dropdown()
@@ -294,7 +307,6 @@ class ChatGUI(QWidget):
         self.input_entry.returnPressed.connect(self.send_message)
         chat_layout.addWidget(self.input_entry)
 
-
         self.font_size = 15
 
         self.increase_font_button = QPushButton("+", self)
@@ -304,7 +316,6 @@ class ChatGUI(QWidget):
         self.decrease_font_button = QPushButton("-", self)
         self.decrease_font_button.setFixedSize(30, 30)
         self.decrease_font_button.clicked.connect(self.decrease_font_size)
-
 
         self.send_button = QPushButton("Send", self)
         self.send_button.clicked.connect(self.send_message)
@@ -357,8 +368,8 @@ class ChatGUI(QWidget):
 
         hline = QFrame(self)
         hline.setObjectName("line")
-        hline.setFrameShape(QFrame.HLine)
-        hline.setFrameShadow(QFrame.Sunken)
+        hline.setFrameShape(QFrame.Shape.HLine)
+        hline.setFrameShadow(QFrame.Shadow.Sunken)
         roleplay_layout.addWidget(hline)
 
         self.preset_name_field = QLineEdit(self)
@@ -429,11 +440,9 @@ class ChatGUI(QWidget):
             self.font_size -= 1
             self.messages_text.setStyleSheet(f"font-size: {self.font_size}px")
 
-
     def update_base_url(self, base_url):
         self.chatgpt_client.base_url = base_url
         self.chatgpt_client.save_global_settings()
-
 
     def update_model(self, model):
         self.chatgpt_client.model = model
@@ -444,7 +453,7 @@ class ChatGUI(QWidget):
         self.chatgpt_client.save_global_settings()
 
     # def update_api_type(self, api_type):
-        # self.chatgpt_client.api_type = api_type
+    # self.chatgpt_client.api_type = api_type
 
     def load_presets(self):
         try:
@@ -483,11 +492,11 @@ class ChatGUI(QWidget):
             if self.chatgpt_client.chat_history:
                 reply = QMessageBox.question(self, 'New Conversation',
                                              'Changing the preset will start a new conversation. Continue?',
-                                             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-                if reply == QMessageBox.Yes:
+                                             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                                             QMessageBox.StandardButton.No)
+                if reply == QMessageBox.StandardButton.Yes:
                     self.messages_text.clear()
                     self.chatgpt_client.chat_history.clear()
-
                 else:
                     return
             else:
@@ -516,9 +525,6 @@ class ChatGUI(QWidget):
                 self.input_entry.setDisabled(False)
                 self.input_entry.setFocus()
 
-
-
-
     def save_preset(self):
         preset_name = self.preset_name_field.text()
         if preset_name:
@@ -541,6 +547,7 @@ class ChatGUI(QWidget):
             self.preset_dropdown.setCurrentText(preset_name)
 
     def add_preset(self):
+        # TODO this is not used.
         preset_name, ok = QInputDialog.getText(self, 'Add Preset', 'Enter preset name:')
         if ok and preset_name:
             self.presets[preset_name] = {
@@ -565,11 +572,11 @@ class ChatGUI(QWidget):
         }
         response = requests.get(url, headers=headers)
 
+        print(response.text)
         models = response.json().get('data', [])
 
         for model in models:
             self.model_dropdown.addItem(model['id'])
-
 
     def populate_model_dropdown(self):
         self.model_dropdown.clear()
@@ -617,8 +624,8 @@ class ChatGUI(QWidget):
             self.worker.wait()
         event.accept()
 
-def main():
 
+def main():
     with open('global_settings.json', 'r') as file:
         global_settings = json.load(file)
 
@@ -633,7 +640,8 @@ def main():
     chat_gui.setGeometry(100, 100, 400, 600)
     chat_gui.show()
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()
