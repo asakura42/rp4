@@ -122,16 +122,14 @@ dark_theme_style = generate_theme_style("#2b2b2b", "#a9b7c6", "#214283", "#4e5b6
 class Worker(QThread):
     finished = pyqtSignal(str)
 
-    def __init__(self, chatgpt_client, user_message, preset_name, api_type):
+    def __init__(self, chatgpt_client: ChatGPTClient, user_message: str, preset_name: str):
         super().__init__()
         self.chatgpt_client = chatgpt_client
         self.user_message = user_message
         self.preset_name = preset_name
-        self.api_type = api_type
 
     def run(self):
         try:
-            self.chatgpt_client.globals.api_type = self.api_type
             assistant_response = self.chatgpt_client.send_message(self.user_message, self.preset_name)
             self.finished.emit(assistant_response)
         except Exception as e:
@@ -440,17 +438,15 @@ class ChatGUI(QWidget):
 
     def send_message(self):
         user_message = self.input_entry.text()
+        self.chatgpt_client.globals.api_type = self.api_dropdown.currentText()
+        self.chatgpt_client.presets[self.preset_dropdown.currentText()] = self._get_current_preset_from_gui()
         self.update_ui(user_message, is_user=True)
-
         self.input_entry.setDisabled(True)
 
         if self.worker and self.worker.isRunning():
             self.worker.wait()
 
-        preset_name = self.preset_dropdown.currentText()
-        api_type = self.api_dropdown.currentText()
-
-        self.worker = Worker(self.chatgpt_client, user_message, preset_name, api_type)
+        self.worker = Worker(self.chatgpt_client, user_message, self.preset_dropdown.currentText())
         self.worker.finished.connect(self.update_ui)
         self.worker.start()
 
