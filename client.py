@@ -53,10 +53,10 @@ class ChatGPTClient:
         # global settings
         self.globals = GlobalSettings()
         self.set_kwargs(kwargs)
-        self.load_global_settings(globals_file_path)
+        self.load_global_settings()
         # presets
         self.presets = {"Assistant": Preset()}
-        self.load_presets(presets_file_path)
+        self.load_presets()
         # history
         self.chat_history: list[ChatHistoryEntry] = []
 
@@ -78,9 +78,9 @@ class ChatGPTClient:
         with open(self.globals_file_path, 'w', encoding="utf-8") as of:
             json.dump(dataclasses.asdict(self.globals), of, indent=4, ensure_ascii=False)
 
-    def load_global_settings(self, file_path):
+    def load_global_settings(self):
         try:
-            with open(file_path, 'r') as f:
+            with open(self.globals_file_path, 'r') as f:
                 self.globals = dataclasses.replace(
                     self.globals,
                     **json.load(f)
@@ -88,9 +88,9 @@ class ChatGPTClient:
         except FileNotFoundError:
             print("Global settings file is not found.")
 
-    def load_presets(self, settings_file: str):
+    def load_presets(self):
         try:
-            with open(settings_file, 'r') as f:
+            with open(self.presets_file_path, 'r') as f:
                 self.presets = {
                     preset_name: Preset(**data)
                     for preset_name, data in json.load(f).items()
