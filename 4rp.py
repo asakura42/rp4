@@ -227,12 +227,6 @@ class ChatGUI(QWidget):
         roleplay_layout.addWidget(QLabel("API Key:"))
         roleplay_layout.addWidget(self.api_key_field)
 
-        self.model_dropdown = QComboBox(self)
-        self.populate_model_dropdown()
-        roleplay_layout.addWidget(QLabel("Select Model:"))
-        roleplay_layout.addWidget(self.model_dropdown)
-        self.model_dropdown.currentTextChanged.connect(self.update_model)
-
         self.theme_dropdown = QComboBox(self)
         self.theme_dropdown.addItem("Dark")
         self.theme_dropdown.addItem("Warm")
@@ -243,11 +237,19 @@ class ChatGUI(QWidget):
         roleplay_layout.addWidget(QLabel("Select Theme:"))
         roleplay_layout.addWidget(self.theme_dropdown)
 
+        # HR
         hline = QFrame(self)
         hline.setObjectName("line")
         hline.setFrameShape(QFrame.Shape.HLine)
         hline.setFrameShadow(QFrame.Shadow.Sunken)
+        hline.setMinimumSize(50, 4)
         roleplay_layout.addWidget(hline)
+
+        self.model_dropdown = QComboBox(self)
+        self.populate_model_dropdown()
+        roleplay_layout.addWidget(QLabel("Select Model:"))
+        roleplay_layout.addWidget(self.model_dropdown)
+        self.model_dropdown.currentTextChanged.connect(self.update_model)
 
         roleplay_layout.addWidget(QLabel("System Prompt:"))
         self.system_prompt1 = QTextEdit(self)
