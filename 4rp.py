@@ -338,12 +338,9 @@ class ChatGUI(QWidget):
         self.preset_dropdown.clear()
         self.preset_dropdown.addItems(self.chatgpt_client.presets)
 
-    def format_message(self, message, is_user=False):
-        role = "User" if is_user else self.preset_dropdown.currentText()
+    def format_message(self, message, role: str):
         formatted_message = f"START{role}: {message}"
-
         formatted_message = markdown2.markdown(formatted_message, safe_mode=False)
-
         formatted_message = formatted_message.replace('&quot;', '"')
 
         quote_pairs = formatted_message.split('"')
@@ -386,7 +383,7 @@ class ChatGUI(QWidget):
             self.model_dropdown.setCurrentText(self.chatgpt_client.globals.model)
 
             if preset.first_ai_message:
-                self.messages_text.append(self.format_message(preset.first_ai_message))
+                self.messages_text.append(self.format_message(preset.first_ai_message, preset_name))
                 self.input_entry.setDisabled(True)
                 self.input_entry.clear()
                 self.input_entry.setDisabled(False)
@@ -450,9 +447,9 @@ class ChatGUI(QWidget):
         self.worker.finished.connect(self.update_ui)
         self.worker.start()
 
-    def update_ui(self, message, is_user=False):
+    def update_ui(self, message: str, is_user: bool = False):
         role = "User" if is_user else self.preset_dropdown.currentText()
-        formatted_message = self.format_message(message, is_user)
+        formatted_message = self.format_message(message, role)
         self.messages_text.append(formatted_message)
 
         if not is_user:

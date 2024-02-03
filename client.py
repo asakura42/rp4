@@ -97,7 +97,7 @@ class ChatGPTClient:
         if preset.first_ai_message:
             self.chat_history.append({"role": "assistant", "content": preset.first_ai_message})
 
-    def send_message(self, user_message: str, preset_name: str):
+    def send_message(self, user_message: str, preset_name: str) -> str:
         response = None
         assistant_response = "Empty response!"
 
