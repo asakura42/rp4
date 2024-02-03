@@ -1,12 +1,9 @@
 import re
-import re
 import sys
 
 import markdown2
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QScrollArea, QMessageBox, QTextEdit, \
-    QLineEdit, QPushButton, QComboBox, QLabel, QFrame, QSizePolicy
-from PyQt6.QtWidgets import QInputDialog
+from PyQt6.QtWidgets import *
 
 from client import ChatGPTClient, Preset
 
