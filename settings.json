@@ -6,6 +6,7 @@
         "character_description": "",
         "first_ai_message": "",
         "example_chat": "",
-        "world_lore": ""
+        "world_lore": "",
+        "model": "gpt-4-32k"
     }
 }

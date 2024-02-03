@@ -1,1 +1,8 @@
-{"api": "URL_JSON_API", "theme": "Warm", "base_url": "https://api.openai.com/v1", "api_key": "some_key", "model": ""}
+{
+    "api_type": "URL_JSON_API",
+    "api_key": "desu",
+    "base_url": "https://juan-finite-suddenly-volume.trycloudflare.com/proxy/azure/openai/v1",
+    "model": "gpt-4-32k",
+    "theme": "Light",
+    "verbose": false
+}
