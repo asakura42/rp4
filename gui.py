@@ -424,6 +424,7 @@ class ChatGUI(QWidget):
             self.chatgpt_client.save_presets_to_disk()
 
     def populate_model_dropdown(self, new_base_url: bool = False):
+        selected_model = self.chatgpt_client.globals.selected_model
         self.model_dropdown.clear()
         if self.chatgpt_client.globals.api_type == "gpt4free":
             models = [
@@ -444,7 +445,7 @@ class ChatGUI(QWidget):
             self.model_dropdown.itemText(item)
             for item in range(self.model_dropdown.count())
         ]
-        self.model_dropdown.setCurrentText(self.chatgpt_client.globals.selected_model)
+        self.model_dropdown.setCurrentText(selected_model)
 
     def send_message(self):
         user_message = self.input_entry.text()
