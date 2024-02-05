@@ -1,4 +1,4 @@
 g4f
 requests
 markdown2
-pyqt5
+pyqt6
