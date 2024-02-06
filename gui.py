@@ -1,8 +1,10 @@
 import re
 import sys
+from typing import Optional
 
 import markdown2
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
+from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import *
 
 from client import ChatGPTClient, Preset, FetchError
@@ -136,10 +138,12 @@ class Worker(QThread):
             self.finished.emit(f"An error occurred: {e}")
 
 
-class EnterLineEdit(QLineEdit):
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key.Key_Return:
-            self.returnPressed.emit()
+class UserMsgForm(QTextEdit):
+    sendPressed = pyqtSignal()
+
+    def keyPressEvent(self, event: Optional[QKeyEvent]):
+        if event.key() == Qt.Key.Key_Return and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            self.sendPressed.emit()
         else:
             super().keyPressEvent(event)
 
@@ -180,9 +184,13 @@ class ChatGUI(QWidget):
         self.messages_text.setReadOnly(True)
         chat_layout.addWidget(self.messages_text)
 
-        self.input_entry = EnterLineEdit(self)
-        self.input_entry.returnPressed.connect(self.send_message)
-        chat_layout.addWidget(self.input_entry)
+        self.user_message = UserMsgForm(self)
+        # self.user_message.enterEvent.connect(self.send_message)
+        self.user_message.setAcceptRichText(False)
+        self.user_message.setMinimumHeight(100)
+        self.user_message.setMaximumHeight(200)
+        self.user_message.sendPressed.connect(self.send_message)
+        chat_layout.addWidget(self.user_message)
 
         self.font_size = 16
 
@@ -393,10 +401,10 @@ class ChatGUI(QWidget):
 
             if preset.first_ai_message:
                 self.messages_text.append(self.format_message(preset.first_ai_message, preset_name))
-                self.input_entry.setDisabled(True)
-                self.input_entry.clear()
-                self.input_entry.setDisabled(False)
-                self.input_entry.setFocus()
+                self.user_message.setDisabled(True)
+                self.user_message.clear()
+                self.user_message.setDisabled(False)
+                self.user_message.setFocus()
 
     def _get_current_preset_from_gui(self) -> Preset:
         return Preset(
@@ -448,11 +456,11 @@ class ChatGUI(QWidget):
         self.model_dropdown.setCurrentText(selected_model)
 
     def send_message(self):
-        user_message = self.input_entry.text()
+        user_message = self.user_message.toPlainText()
         self.chatgpt_client.globals.api_type = self.api_dropdown.currentText()
         self.chatgpt_client.presets[self.preset_dropdown.currentText()] = self._get_current_preset_from_gui()
         self.update_ui(user_message, is_user=True)
-        self.input_entry.setDisabled(True)
+        self.user_message.setDisabled(True)
 
         if self.worker and self.worker.isRunning():
             self.worker.wait()
@@ -467,9 +475,9 @@ class ChatGUI(QWidget):
         self.messages_text.append(formatted_message)
 
         if not is_user:
-            self.input_entry.clear()
-            self.input_entry.setDisabled(False)
-            self.input_entry.setFocus()
+            self.user_message.clear()
+            self.user_message.setDisabled(False)
+            self.user_message.setFocus()
 
     def closeEvent(self, event):
         if self.worker and self.worker.isRunning():
