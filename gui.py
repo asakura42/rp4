@@ -122,7 +122,7 @@ dark_theme_style = generate_theme_style("#2b2b2b", "#a9b7c6", "#214283", "#4e5b6
 
 
 class Worker(QThread):
-    finished = pyqtSignal(str)
+    finished = pyqtSignal(str) # todo pass struct with fields (msg, role)
 
     def __init__(self, chatgpt_client: ChatGPTClient, user_message: str, preset_name: str):
         super().__init__()
@@ -460,7 +460,6 @@ class ChatGUI(QWidget):
         self.chatgpt_client.globals.api_type = self.api_dropdown.currentText()
         self.chatgpt_client.presets[self.preset_dropdown.currentText()] = self._get_current_preset_from_gui()
         self.update_ui(user_message, is_user=True)
-        self.user_message.setDisabled(True)
 
         if self.worker and self.worker.isRunning():
             self.worker.wait()
@@ -473,10 +472,14 @@ class ChatGUI(QWidget):
         role = "User" if is_user else self.preset_dropdown.currentText()
         formatted_message = self.format_message(message, role)
         self.messages_text.append(formatted_message)
-
-        if not is_user:
+        if is_user:
+            self.user_message.clear()
+            self.user_message.setDisabled(True)
+            self.send_button.setDisabled(True)
+        else:
             self.user_message.clear()
             self.user_message.setDisabled(False)
+            self.send_button.setDisabled(False)
             self.user_message.setFocus()
 
     def closeEvent(self, event):
