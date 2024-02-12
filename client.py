@@ -19,6 +19,7 @@ class GlobalSettings:
     verbose: bool = False
     model_names: list[str] = dataclasses.field(default_factory=list)
     selected_preset: str = ""
+    timeout_sec: int = 180
 
 
 @dataclasses.dataclass
@@ -73,7 +74,7 @@ class ChatGPTClient:
                 cfg_file.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copyfile(src=default_config_dir / cfg_file.name, dst=cfg_file, )
 
-    def save_global_settings(self):
+    def save_global_settings_to_disk(self):
         with open(self.globals_file_path, 'w', encoding="utf-8") as of:
             json.dump(dataclasses.asdict(self.globals), of, indent=4, ensure_ascii=False)
 
@@ -149,8 +150,12 @@ class ChatGPTClient:
                 "top_p": 1,
                 "stream": True
             }
-            response = requests.post(self.globals.base_url + "/chat/completions", json=data, headers=headers,
-                                     stream=True)
+            response = requests.post(
+                f"{self.globals.base_url}/chat/completions",
+                json=data, headers=headers,
+                stream=True,
+                timeout=self.globals.timeout_sec,
+            )
             response.raise_for_status()
 
             assistant_response = ''

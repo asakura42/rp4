@@ -7,7 +7,7 @@ from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import *
 
-from client import ChatGPTClient, Preset, FetchError
+from client import ChatGPTClient, Preset, FetchError, GlobalSettings
 
 
 def generate_theme_style(bg_color, text_color, border_color, button_hover_color, button_pressed_color,
@@ -122,7 +122,7 @@ dark_theme_style = generate_theme_style("#2b2b2b", "#a9b7c6", "#214283", "#4e5b6
 
 
 class Worker(QThread):
-    finished = pyqtSignal(str) # todo pass struct with fields (msg, role)
+    finished = pyqtSignal(str)  # todo pass struct with fields (msg, role)
 
     def __init__(self, chatgpt_client: ChatGPTClient, user_message: str, preset_name: str):
         super().__init__()
@@ -167,16 +167,13 @@ class ChatGUI(QWidget):
             self.app.setStyleSheet(dark_monokai_theme_style)
         elif theme == "Gruvbox":
             self.app.setStyleSheet(gruvbox_theme_style)
-        self.chatgpt_client.globals.theme = theme
-        self.chatgpt_client.save_global_settings()
 
     def update_api_type(self, api_type):
-        self.chatgpt_client.globals.api_type = api_type
-        self.populate_model_dropdown()
-        self.chatgpt_client.save_global_settings()
+        self.populate_model_dropdown(self.model_dropdown.currentText())
 
     def init_ui(self):
         main_layout = QHBoxLayout(self)
+        splitter = QSplitter()
 
         chat_layout = QVBoxLayout()
         self.messages_text = QTextEdit(self)
@@ -204,36 +201,43 @@ class ChatGUI(QWidget):
 
         self.send_button = QPushButton("Send", self)
         self.send_button.clicked.connect(self.send_message)
+        self.send_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+
+        self.clear_history_button = QPushButton("Clear history")
+        self.clear_history_button.clicked.connect(self.clear_history)
 
         button_layout = QHBoxLayout()
         button_layout.addWidget(self.decrease_font_button)
         button_layout.addWidget(self.increase_font_button)
         button_layout.addWidget(self.send_button)
+        button_layout.addWidget(self.clear_history_button)
 
         chat_layout.addLayout(button_layout)
 
-        main_layout.addLayout(chat_layout, 3)
+        chat_area = QScrollArea()
+        chat_area.setLayout(chat_layout)
+        chat_area.setWidgetResizable(True)
+        splitter.addWidget(chat_area)
 
-        roleplay_layout = QVBoxLayout()
+        settings_layout = QVBoxLayout()
 
         self.api_dropdown = QComboBox(self)
         self.api_dropdown.addItem("gpt4free")
         self.api_dropdown.addItem("URL_JSON_API")
         self.api_dropdown.currentTextChanged.connect(self.update_api_type)
-        roleplay_layout.addWidget(QLabel("Select API:"))
-        roleplay_layout.addWidget(self.api_dropdown)
+        settings_layout.addWidget(QLabel("Select API:"))
+        settings_layout.addWidget(self.api_dropdown)
 
         self.base_url_field = QLineEdit(self)
         self.base_url_field.setText(self.chatgpt_client.globals.base_url)
         self.base_url_field.textChanged.connect(self.update_base_url)
-        roleplay_layout.addWidget(QLabel("Base URL (should end with 'v1'):"))
-        roleplay_layout.addWidget(self.base_url_field)
+        settings_layout.addWidget(QLabel("Base URL (should end with 'v1'):"))
+        settings_layout.addWidget(self.base_url_field)
 
         self.api_key_field = QLineEdit(self)
         self.api_key_field.setText(self.chatgpt_client.globals.api_key)
-        self.api_key_field.textChanged.connect(self.update_api_key)
-        roleplay_layout.addWidget(QLabel("API Key:"))
-        roleplay_layout.addWidget(self.api_key_field)
+        settings_layout.addWidget(QLabel("API Key:"))
+        settings_layout.addWidget(self.api_key_field)
 
         self.theme_dropdown = QComboBox(self)
         self.theme_dropdown.addItem("Dark")
@@ -242,15 +246,15 @@ class ChatGUI(QWidget):
         self.theme_dropdown.addItem("Monokai")
         self.theme_dropdown.addItem("Gruvbox")
         self.theme_dropdown.currentTextChanged.connect(self.switch_theme)
-        roleplay_layout.addWidget(QLabel("Select Theme:"))
-        roleplay_layout.addWidget(self.theme_dropdown)
+        settings_layout.addWidget(QLabel("Select Theme:"))
+        settings_layout.addWidget(self.theme_dropdown)
+        self.theme_dropdown.setCurrentText(self.chatgpt_client.globals.theme)
 
         # model dropdown (gpt-4, etc.)
         self.model_dropdown = QComboBox(self)
-        roleplay_layout.addWidget(QLabel("Select Model:"))
-        roleplay_layout.addWidget(self.model_dropdown)
-        self.populate_model_dropdown()
-        self.model_dropdown.currentTextChanged.connect(self.update_model)
+        settings_layout.addWidget(QLabel("Select Model:"))
+        settings_layout.addWidget(self.model_dropdown)
+        self.populate_model_dropdown(self.chatgpt_client.globals.selected_model)
 
         # HR
         hline = QFrame(self)
@@ -258,45 +262,44 @@ class ChatGUI(QWidget):
         hline.setFrameShape(QFrame.Shape.HLine)
         hline.setFrameShadow(QFrame.Shadow.Sunken)
         hline.setMinimumSize(50, 4)
-        roleplay_layout.addWidget(hline)
-
-        roleplay_layout.addWidget(QLabel("#1 System Prompt:"))
-        self.system_prompt1 = QTextEdit(self)
-        roleplay_layout.addWidget(self.system_prompt1)
-
-        roleplay_layout.addWidget(QLabel("#2 NSFW Prompt:"))
-        self.system_prompt2 = QTextEdit(self)
-        roleplay_layout.addWidget(self.system_prompt2)
-
-        roleplay_layout.addWidget(QLabel("#3 JailBreak prompt:"))
-        self.system_prompt3 = QTextEdit(self)
-        roleplay_layout.addWidget(self.system_prompt3)
-
-        roleplay_layout.addWidget(QLabel("Character Description:"))
-        self.character_description = QTextEdit(self)
-        roleplay_layout.addWidget(self.character_description)
-
-        roleplay_layout.addWidget(QLabel("First AI Message:"))
-        self.first_ai_message = QTextEdit(self)
-        roleplay_layout.addWidget(self.first_ai_message)
-
-        roleplay_layout.addWidget(QLabel("Example Chat:"))
-        self.example_chat = QTextEdit(self)
-        roleplay_layout.addWidget(self.example_chat)
-
-        roleplay_layout.addWidget(QLabel("World Lore:"))
-        self.world_lore = QTextEdit(self)
-        roleplay_layout.addWidget(self.world_lore)
+        settings_layout.addWidget(hline)
 
         # Preset selector
         hbox = QHBoxLayout()
-        roleplay_layout.addLayout(hbox)
         self.preset_dropdown = QComboBox(self)
-        self.preset_dropdown.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Preferred)
-        self.populate_preset_names()
-        self.preset_dropdown.currentIndexChanged.connect(self.apply_preset)
         hbox.addWidget(QLabel("Select Preset:"))
         hbox.addWidget(self.preset_dropdown)
+        self.preset_dropdown.setSizePolicy(QSizePolicy.Policy.MinimumExpanding, QSizePolicy.Policy.Preferred)
+        settings_layout.addLayout(hbox)
+
+        # System prompts
+        settings_layout.addWidget(QLabel("#1 System Prompt:"))
+        self.system_prompt1 = QTextEdit(self)
+        settings_layout.addWidget(self.system_prompt1)
+
+        settings_layout.addWidget(QLabel("#2 NSFW Prompt:"))
+        self.system_prompt2 = QTextEdit(self)
+        settings_layout.addWidget(self.system_prompt2)
+
+        settings_layout.addWidget(QLabel("#3 JailBreak prompt:"))
+        self.system_prompt3 = QTextEdit(self)
+        settings_layout.addWidget(self.system_prompt3)
+
+        settings_layout.addWidget(QLabel("Character Description:"))
+        self.character_description = QTextEdit(self)
+        settings_layout.addWidget(self.character_description)
+
+        settings_layout.addWidget(QLabel("First AI Message:"))
+        self.first_ai_message = QTextEdit(self)
+        settings_layout.addWidget(self.first_ai_message)
+
+        settings_layout.addWidget(QLabel("Example Chat:"))
+        self.example_chat = QTextEdit(self)
+        settings_layout.addWidget(self.example_chat)
+
+        settings_layout.addWidget(QLabel("World Lore:"))
+        self.world_lore = QTextEdit(self)
+        settings_layout.addWidget(self.world_lore)
 
         # Add a new preset
         self.add_btn = QPushButton("+")
@@ -304,24 +307,33 @@ class ChatGUI(QWidget):
         hbox.addWidget(self.add_btn)
         self.add_btn.pressed.connect(self.add_preset)
 
-        self.save_preset_button = QPushButton("Save Preset", self)
-        self.save_preset_button.clicked.connect(self.save_preset)
-        roleplay_layout.addWidget(self.save_preset_button)
+        # save settings.
+        self.save_settings_button = QPushButton("Save settings", self)
+        self.save_settings_button.clicked.connect(self.save_settings_to_disk)
+        settings_layout.addWidget(self.save_settings_button)
 
-        scroll_area = QScrollArea(self)
-        scroll_area.setWidgetResizable(True)
+        settings_area = QScrollArea(self)
+        settings_area.setWidgetResizable(True)
 
-        roleplay_widget = QWidget()
-        roleplay_widget.setLayout(roleplay_layout)
+        settings_area.setLayout(settings_layout)
 
-        scroll_area.setWidget(roleplay_widget)
-
-        main_layout.addWidget(scroll_area, 1)
+        splitter.addWidget(settings_area)
 
         self.setLayout(main_layout)
+        main_layout.addWidget(splitter)
+        splitter.setSizes([300, 100])
 
         self.api_dropdown.setCurrentText(self.chatgpt_client.globals.api_type)
-        self.theme_dropdown.setCurrentText(self.chatgpt_client.globals.theme)
+
+        #  Populate presets (and system prompt fields)
+        self.populate_preset_names()
+        self.preset_dropdown.currentTextChanged.connect(self.apply_preset)
+
+    def populate_preset_names(self):
+        self.preset_dropdown.clear()
+        self.preset_dropdown.addItems(self.chatgpt_client.presets)
+        self.preset_dropdown.setCurrentText(self.chatgpt_client.globals.selected_preset)
+        self.apply_preset(self.chatgpt_client.globals.selected_preset)
 
     def increase_font_size(self):
         self.font_size += 1
@@ -334,26 +346,38 @@ class ChatGUI(QWidget):
 
     def update_base_url(self, base_url: str):
         if base_url and base_url != self.chatgpt_client.globals.base_url:
-            self.chatgpt_client.globals.base_url = base_url
-            self.populate_model_dropdown(new_base_url=True)
-            self.chatgpt_client.save_global_settings()
+            self.sync_settings_with_backend()
+            self.populate_model_dropdown(self.model_dropdown.currentText(), new_base_url=True)
 
-    def update_model(self, model: str):
-        self.chatgpt_client.globals.selected_model = model
-        self.chatgpt_client.save_global_settings()
+    def _current_settings_from_gui(self):
+        """
+        dump current settings from the GUI layout.
+        """
+        return GlobalSettings(
+            api_type=self.api_dropdown.currentText(),
+            api_key=self.api_key_field.text(),
+            base_url=self.base_url_field.text(),
+            selected_model=self.model_dropdown.currentText(),
+            theme=self.theme_dropdown.currentText(),
+            model_names=[
+                self.model_dropdown.itemText(item)
+                for item in range(self.model_dropdown.count())
+            ],
+            selected_preset=self.preset_dropdown.currentText(),
+            verbose=False,
+        )
 
-    def update_api_key(self, api_key):
-        self.chatgpt_client.globals.api_key = api_key
-        self.chatgpt_client.save_global_settings()
+    def sync_settings_with_backend(self):
+        # global settings
+        self.chatgpt_client.globals = self._current_settings_from_gui()
+        # presets
+        if current_preset_name := self.preset_dropdown.currentText():
+            self.chatgpt_client.presets[current_preset_name] = self._get_current_preset_from_gui()
 
-    # def update_api_type(self, api_type):
-    # self.chatgpt_client.api_type = api_type
-
-    def populate_preset_names(self):
-        self.preset_dropdown.clear()
-        self.preset_dropdown.addItems(self.chatgpt_client.presets)
-        self.preset_dropdown.setCurrentText(self.chatgpt_client.globals.selected_preset)
-        self.apply_preset()
+    def save_settings_to_disk(self):
+        self.sync_settings_with_backend()
+        self.chatgpt_client.save_global_settings_to_disk()
+        self.chatgpt_client.save_presets_to_disk()
 
     def format_message(self, message, role: str):
         formatted_message = f"START{role}: {message}"
@@ -370,11 +394,12 @@ class ChatGUI(QWidget):
 
         return formatted_message
 
-    def apply_preset(self):
-        preset_name = self.preset_dropdown.currentText()
+    def clear_history(self):
+        self.messages_text.clear()
+        self.chatgpt_client.chat_history.clear()
+
+    def apply_preset(self, preset_name: str):
         if preset_name in self.chatgpt_client.presets:
-            self.chatgpt_client.globals.selected_preset = preset_name
-            self.chatgpt_client.save_global_settings()
             if self.chatgpt_client.chat_history:
                 reply = QMessageBox.question(
                     self, 'New Conversation',
@@ -383,12 +408,11 @@ class ChatGUI(QWidget):
                     QMessageBox.StandardButton.No
                 )
                 if reply == QMessageBox.StandardButton.Yes:
-                    self.messages_text.clear()
-                    self.chatgpt_client.chat_history.clear()
+                    self.clear_history()
                 else:
                     return
             else:
-                self.messages_text.clear()
+                self.clear_history()
 
             preset = self.chatgpt_client.presets[preset_name]
             self.system_prompt1.setText(preset.system_prompt1)
@@ -417,22 +441,14 @@ class ChatGUI(QWidget):
             world_lore=self.world_lore.toPlainText(),
         )
 
-    def save_preset(self):
-        current_preset_name = self.preset_dropdown.currentText()
-        if current_preset_name:
-            self.chatgpt_client.presets[current_preset_name] = self._get_current_preset_from_gui()
-            self.chatgpt_client.save_presets_to_disk()
-
     def add_preset(self):
         new_preset_name, ok = QInputDialog.getText(self, 'Add Preset', 'Enter preset name:')
         if ok and new_preset_name:
             self.chatgpt_client.presets[new_preset_name] = self._get_current_preset_from_gui()
             self.preset_dropdown.addItem(new_preset_name)
             self.preset_dropdown.setCurrentText(new_preset_name)
-            self.chatgpt_client.save_presets_to_disk()
 
-    def populate_model_dropdown(self, new_base_url: bool = False):
-        selected_model = self.chatgpt_client.globals.selected_model
+    def populate_model_dropdown(self, selected_model: str, new_base_url: bool = False):
         self.model_dropdown.clear()
         if self.chatgpt_client.globals.api_type == "gpt4free":
             models = [
@@ -449,16 +465,13 @@ class ChatGUI(QWidget):
                 )
             except FetchError as ex:
                 print(ex)
-        self.chatgpt_client.globals.model_names = [
-            self.model_dropdown.itemText(item)
-            for item in range(self.model_dropdown.count())
-        ]
         self.model_dropdown.setCurrentText(selected_model)
 
     def send_message(self):
         user_message = self.user_message.toPlainText()
-        self.chatgpt_client.globals.api_type = self.api_dropdown.currentText()
-        self.chatgpt_client.presets[self.preset_dropdown.currentText()] = self._get_current_preset_from_gui()
+
+        self.sync_settings_with_backend()
+
         self.update_ui(user_message, is_user=True)
 
         if self.worker and self.worker.isRunning():
@@ -496,7 +509,6 @@ def main(chatgpt_client: ChatGPTClient | None = None):
     chat_gui.setWindowTitle("4rp")
     chat_gui.setGeometry(100, 100, 400, 600)
     chat_gui.show()
-
     sys.exit(app.exec())
 
 
