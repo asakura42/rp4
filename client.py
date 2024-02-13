@@ -116,7 +116,7 @@ class ChatGPTClient:
         if preset.first_ai_message:
             self.chat_history.append({"role": "assistant", "content": preset.first_ai_message})
 
-    def send_message(self, user_message: str, preset_name: str) -> str:
+    def send_message(self, user_message: str, preset_name: str, model_name: str = None) -> str:
         response = None
         assistant_response = "Empty response!"
 
@@ -141,7 +141,7 @@ class ChatGPTClient:
                 "Authorization": f"Bearer {self.globals.api_key}"
             }
             data = {
-                "model": self.globals.selected_model,
+                "model": (model_name or self.globals.selected_model),
                 "messages": self.chat_history,
                 "max_tokens": 1000,
                 "frequency_penalty": 0.7,

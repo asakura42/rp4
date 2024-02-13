@@ -1,6 +1,8 @@
 import argparse
-from client import ChatGPTClient
+
 import gui
+from client import ChatGPTClient
+
 
 def main():
     parser = argparse.ArgumentParser(description='CLI interface.', usage="Send messages to the server.")
@@ -11,6 +13,7 @@ def main():
     parser.add_argument('--gui', dest='launch_gui', action='store_true', help='Launch GUI.')
     parser.add_argument('--ask', dest='ask_question', type=str, help='Ask model a question.')
     parser.add_argument('--preset', dest='set_preset', type=str, help='Pass a preset name.')
+    parser.add_argument('--model', dest='model_name', type=str, help='Pass a model name.')
     args = parser.parse_args()
 
     client = ChatGPTClient()
@@ -23,7 +26,11 @@ def main():
         case argparse.Namespace(print_presets=True):
             return print("\n".join(client.presets))
         case argparse.Namespace() if args.ask_question:
-            return print(client.send_message(args.ask_question, args.set_preset or client.globals.selected_preset))
+            return print(client.send_message(
+                args.ask_question,
+                (args.set_preset or client.globals.selected_preset),
+                args.model_name
+            ))
         case argparse.Namespace(launch_gui=True):
             return gui.main(client)
         case _:
