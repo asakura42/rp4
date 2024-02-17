@@ -230,8 +230,10 @@ class ChatGUI(QWidget):
 
         self.base_url_field = QLineEdit(self)
         self.base_url_field.setText(self.chatgpt_client.globals.base_url)
-        self.base_url_field.textChanged.connect(self.update_base_url)
-        settings_layout.addWidget(QLabel("Base URL (should end with 'v1'):"))
+        self.base_url_field.editingFinished.connect(self.update_base_url)
+        settings_layout.addWidget(ql := QLabel(
+            "Base URL (<a href=\"https://rentry.org/desudeliveryservice\">find URLs</a>):"))
+        ql.setOpenExternalLinks(True)
         settings_layout.addWidget(self.base_url_field)
 
         self.api_key_field = QLineEdit(self)
