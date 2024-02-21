@@ -169,6 +169,7 @@ class ChatGUI(QWidget):
             self.app.setStyleSheet(gruvbox_theme_style)
 
     def update_api_type(self, api_type):
+        self.chatgpt_client.globals.api_type = self.api_dropdown.currentText()
         self.populate_model_dropdown(self.model_dropdown.currentText())
 
     def init_ui(self):
@@ -346,9 +347,9 @@ class ChatGUI(QWidget):
             self.font_size -= 1
             self.messages_text.setStyleSheet(f"font-size: {self.font_size}px")
 
-    def update_base_url(self, base_url: str):
-        if base_url and base_url != self.chatgpt_client.globals.base_url:
-            self.sync_settings_with_backend()
+    def update_base_url(self):
+        if self.base_url_field.text() and self.base_url_field.text() != self.chatgpt_client.globals.base_url:
+            self.chatgpt_client.globals.base_url = self.base_url_field.text()
             self.populate_model_dropdown(self.model_dropdown.currentText(), new_base_url=True)
 
     def _current_settings_from_gui(self):
@@ -451,20 +452,19 @@ class ChatGUI(QWidget):
             self.preset_dropdown.setCurrentText(new_preset_name)
 
     def populate_model_dropdown(self, selected_model: str, new_base_url: bool = False):
+        print("populating models")
         self.model_dropdown.clear()
         if self.chatgpt_client.globals.api_type == "gpt4free":
-            models = [
+            self.chatgpt_client.globals.model_names = [
                 'gpt-3.5-turbo-16k',
                 'gpt-4-turbo',
             ]
-            self.model_dropdown.addItems(models)
+            self.model_dropdown.addItems(self.chatgpt_client.globals.model_names)
         elif self.chatgpt_client.globals.api_type == "URL_JSON_API":
             try:
-                self.model_dropdown.addItems(
-                    self.chatgpt_client.globals.model_names
-                    if (self.chatgpt_client.globals.model_names and new_base_url is False)
-                    else self.chatgpt_client.fetch_model_names()
-                )
+                if not self.chatgpt_client.globals.model_names or new_base_url is True:
+                    self.chatgpt_client.globals.model_names = self.chatgpt_client.fetch_model_names()
+                self.model_dropdown.addItems(self.chatgpt_client.globals.model_names)
             except FetchError as ex:
                 print(ex)
         self.model_dropdown.setCurrentText(selected_model)
