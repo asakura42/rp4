@@ -1,4 +1,3 @@
-import re
 import sys
 from typing import Optional
 
@@ -392,6 +391,13 @@ class ChatGUI(QWidget):
         message = f"{html_role} {message}"
         if self.chatgpt_client.globals.md2html:
             message = str(markdown2.markdown(message, safe_mode=False))
+        else:
+            message = (
+                message
+                .replace('<', '&lt;')
+                .replace('>', '&gt;')
+                .replace('\n', '<br>')
+            )
         message = message.replace('&quot;', '"')
 
         quote_pairs = message.split('"')
