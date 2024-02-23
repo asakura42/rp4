@@ -259,6 +259,10 @@ class ChatGUI(QWidget):
         settings_layout.addWidget(self.model_dropdown)
         self.populate_model_dropdown(self.chatgpt_client.globals.selected_model)
 
+        self.format_md_checkbox = QCheckBox("Markdown as HTML")
+        self.format_md_checkbox.setChecked(self.chatgpt_client.globals.md2html)
+        settings_layout.addWidget(self.format_md_checkbox)
+
         # HR
         hline = QFrame(self)
         hline.setObjectName("line")
@@ -368,6 +372,7 @@ class ChatGUI(QWidget):
             ],
             selected_preset=self.preset_dropdown.currentText(),
             verbose=False,
+            md2html=self.format_md_checkbox.isChecked(),
         )
 
     def sync_settings_with_backend(self):
@@ -382,20 +387,20 @@ class ChatGUI(QWidget):
         self.chatgpt_client.save_global_settings_to_disk()
         self.chatgpt_client.save_presets_to_disk()
 
-    def format_message(self, message, role: str):
-        formatted_message = f"START{role}: {message}"
-        formatted_message = markdown2.markdown(formatted_message, safe_mode=False)
-        formatted_message = formatted_message.replace('&quot;', '"')
+    def format_message(self, message: str, role: str):
+        html_role = f"START{role}:"
+        message = f"{html_role} {message}"
+        if self.chatgpt_client.globals.md2html:
+            message = str(markdown2.markdown(message, safe_mode=False))
+        message = message.replace('&quot;', '"')
 
-        quote_pairs = formatted_message.split('"')
+        quote_pairs = message.split('"')
         for i in range(1, len(quote_pairs), 2):
             quote_pairs[i] = f'<span style="color: gray;">{quote_pairs[i]}</span>'
-        formatted_message = '"'.join(quote_pairs)
+        message = '"'.join(quote_pairs)
 
-        html_role = f"START{role}"
-        formatted_message = re.sub(html_role, f'<b>{role}</b>', formatted_message, count=1)
-
-        return formatted_message
+        message = message.replace(html_role, f'<h2>{role}</h2>', 1)
+        return message
 
     def clear_history(self):
         self.messages_text.clear()
@@ -485,8 +490,7 @@ class ChatGUI(QWidget):
 
     def update_ui(self, message: str, is_user: bool = False):
         role = "User" if is_user else self.preset_dropdown.currentText()
-        formatted_message = self.format_message(message, role)
-        self.messages_text.append(formatted_message)
+        self.messages_text.append(self.format_message(message, role))
         if is_user:
             self.user_message.clear()
             self.user_message.setDisabled(True)

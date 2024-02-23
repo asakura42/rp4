@@ -20,6 +20,7 @@ class GlobalSettings:
     model_names: list[str] = dataclasses.field(default_factory=list)
     selected_preset: str = ""
     timeout_sec: int = 180
+    md2html: bool = True
 
 
 @dataclasses.dataclass
