@@ -1,3 +1,4 @@
+import datetime
 import sys
 from typing import Optional
 
@@ -145,6 +146,22 @@ class UserMsgForm(QTextEdit):
             self.sendPressed.emit()
         else:
             super().keyPressEvent(event)
+
+
+def highlight_quoted_text(message, color):
+    quote = '"'
+    quote_pairs = message.split(quote)
+    for i in range(1, len(quote_pairs), 2):
+        quote_pairs[i] = f'<span style="color: {color};">{quote_pairs[i]}</span>'
+    return quote.join(quote_pairs)
+
+
+def wrap_code_blocks(message):
+    code_block = "```"
+    block_pairs = message.split(code_block)
+    for i in range(1, len(block_pairs), 2):
+        block_pairs[i] = f'<pre>{block_pairs[i]}</pre>'
+    return code_block.join(block_pairs)
 
 
 class ChatGUI(QWidget):
@@ -335,6 +352,9 @@ class ChatGUI(QWidget):
         self.populate_preset_names()
         self.preset_dropdown.currentTextChanged.connect(self.apply_preset)
 
+        # Focus message box
+        self.user_message.setFocus()
+
     def populate_preset_names(self):
         self.preset_dropdown.clear()
         self.preset_dropdown.addItems(self.chatgpt_client.presets)
@@ -400,12 +420,14 @@ class ChatGUI(QWidget):
             )
         message = message.replace('&quot;', '"')
 
-        quote_pairs = message.split('"')
-        for i in range(1, len(quote_pairs), 2):
-            quote_pairs[i] = f'<span style="color: gray;">{quote_pairs[i]}</span>'
-        message = '"'.join(quote_pairs)
+        message = highlight_quoted_text(message, color="gray")
+        message = wrap_code_blocks(message)
 
-        message = message.replace(html_role, f'<h2>{role}</h2>', 1)
+        message = message.replace(
+            html_role,
+            f'<div style="font-size: 20px; border-bottom: 1px solid gray;"><b>{datetime.datetime.now().strftime("%H:%M")}</b>: {role}</div>',
+            1
+        )
         return message
 
     def clear_history(self):
