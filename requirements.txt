@@ -1,0 +1,4 @@
+g4f
+requests
+markdown2
+pyqt6
