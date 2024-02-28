@@ -8,6 +8,8 @@ from pprint import pprint
 import g4f
 import requests
 
+PROGRAM_NAME = "rp4"
+
 
 @dataclasses.dataclass
 class GlobalSettings:
@@ -44,10 +46,7 @@ class FetchError(requests.RequestException):
 
 
 class ChatGPTClient:
-    def __init__(self,
-                 globals_file_path: str | None = None,
-                 presets_file_path: str | None = None,
-                 **kwargs):
+    def __init__(self, globals_file_path: str | None = None, presets_file_path: str | None = None, **kwargs):
         # create a config folder and copy default config files
         self.globals_file_path = globals_file_path
         self.presets_file_path = presets_file_path
@@ -65,37 +64,34 @@ class ChatGPTClient:
     def deploy_default_configs(self):
         default_config_dir = pathlib.Path(__file__).parent / "defaults"
         assert default_config_dir.is_dir()
-        config_home_dir = pathlib.Path.home() / ".config" / "4rp"
+        config_home_dir = pathlib.Path.home() / ".config" / PROGRAM_NAME
         if not self.globals_file_path:
             self.globals_file_path = config_home_dir / "global_settings.json"
         if not self.presets_file_path:
-            self.presets_file_path = config_home_dir / "settings.json"
+            self.presets_file_path = config_home_dir / "preset_settings.json"
         for cfg_file in (self.globals_file_path, self.presets_file_path):
             if not cfg_file.is_file():
                 cfg_file.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(src=default_config_dir / cfg_file.name, dst=cfg_file, )
+                shutil.copyfile(
+                    src=default_config_dir / cfg_file.name,
+                    dst=cfg_file,
+                )
 
     def save_global_settings_to_disk(self):
-        with open(self.globals_file_path, 'w', encoding="utf-8") as of:
+        with open(self.globals_file_path, "w", encoding="utf-8") as of:
             json.dump(dataclasses.asdict(self.globals), of, indent=4, ensure_ascii=False)
 
     def load_global_settings(self):
         try:
-            with open(self.globals_file_path, 'r') as f:
-                self.globals = dataclasses.replace(
-                    self.globals,
-                    **json.load(f)
-                )
+            with open(self.globals_file_path, "r") as f:
+                self.globals = dataclasses.replace(self.globals, **json.load(f))
         except FileNotFoundError:
             print("Global settings file is not found.")
 
     def load_presets(self):
         try:
-            with open(self.presets_file_path, 'r') as f:
-                self.presets = {
-                    preset_name: Preset(**data)
-                    for preset_name, data in json.load(f).items()
-                }
+            with open(self.presets_file_path, "r") as f:
+                self.presets = {preset_name: Preset(**data) for preset_name, data in json.load(f).items()}
         except FileNotFoundError:
             print("Presets settings file is not found.")
 
@@ -108,10 +104,12 @@ class ChatGPTClient:
             self.chat_history.append({"role": "system", "content": preset.system_prompt2})
         if preset.character_description:
             self.chat_history.append(
-                {"role": "system", "content": "AI CHARACTER DESCRIPTION:\\n" + preset.character_description})
+                {"role": "system", "content": "AI CHARACTER DESCRIPTION:\\n" + preset.character_description}
+            )
         if preset.example_chat:
             self.chat_history.append(
-                {"role": "system", "content": "EXAMPLE CHAT WITH THIS CHARACTER:\\n" + preset.example_chat})
+                {"role": "system", "content": "EXAMPLE CHAT WITH THIS CHARACTER:\\n" + preset.example_chat}
+            )
         if preset.world_lore:
             self.chat_history.append({"role": "system", "content": "WORLD LORE:\\n" + preset.world_lore})
         if preset.first_ai_message:
@@ -137,10 +135,7 @@ class ChatGPTClient:
             )
             assistant_response = response
         elif self.globals.api_type == "URL_JSON_API":
-            headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.globals.api_key}"
-            }
+            headers = {"Content-Type": "application/json", "Authorization": f"Bearer {self.globals.api_key}"}
             data = {
                 "model": (model_name or self.globals.selected_model),
                 "messages": self.chat_history,
@@ -149,25 +144,26 @@ class ChatGPTClient:
                 "temperature": 0.9,
                 "presence_penalty": 0.7,
                 "top_p": 1,
-                "stream": True
+                "stream": True,
             }
             response = requests.post(
                 f"{self.globals.base_url}/chat/completions",
-                json=data, headers=headers,
+                json=data,
+                headers=headers,
                 stream=True,
                 timeout=self.globals.timeout_sec,
             )
             response.raise_for_status()
 
-            assistant_response = ''
+            assistant_response = ""
             for line in response.iter_lines():
                 if line:
-                    decoded_line = line.decode('utf-8')
-                    if decoded_line == 'data: [DONE]':
+                    decoded_line = line.decode("utf-8")
+                    if decoded_line == "data: [DONE]":
                         break
-                    elif decoded_line.startswith('data:'):
+                    elif decoded_line.startswith("data:"):
                         json_line = json.loads(decoded_line[5:].strip())
-                        content = json_line.get('choices', [{}])[0].get('delta', {}).get('content', '')
+                        content = json_line.get("choices", [{}])[0].get("delta", {}).get("content", "")
                         assistant_response += content
 
         if response:
@@ -181,26 +177,16 @@ class ChatGPTClient:
         return assistant_response
 
     def set_kwargs(self, kwargs):
-        self.globals = dataclasses.replace(
-            self.globals,
-            **{key: val for key, val in kwargs.items() if (key and val)}
-        )
+        self.globals = dataclasses.replace(self.globals, **{key: val for key, val in kwargs.items() if (key and val)})
 
     def save_presets_to_disk(self):
-        payload = {
-            preset_name: dataclasses.asdict(preset_data)
-            for preset_name, preset_data
-            in self.presets.items()
-        }
-        with open(self.presets_file_path, 'w') as file:
+        payload = {preset_name: dataclasses.asdict(preset_data) for preset_name, preset_data in self.presets.items()}
+        with open(self.presets_file_path, "w") as file:
             json.dump(payload, file, indent=4, ensure_ascii=False)
 
     def fetch_model_names(self) -> list[str]:
         url = self.globals.base_url + "/models"
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.globals.api_key}"
-        }
+        headers = {"Content-Type": "application/json", "Authorization": f"Bearer {self.globals.api_key}"}
         try:
             response = requests.get(url, headers=headers, timeout=25)
             response.raise_for_status()
@@ -212,4 +198,4 @@ class ChatGPTClient:
                 print(ex)
             raise FetchError("Couldn't get model names") from ex
         else:
-            return [model['id'] for model in json_data.get('data', [])]
+            return [model["id"] for model in json_data.get("data", [])]

@@ -7,11 +7,19 @@ from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import *
 
-from client import ChatGPTClient, Preset, FetchError, GlobalSettings
+from rp4.client import ChatGPTClient, Preset, FetchError, GlobalSettings, PROGRAM_NAME
 
 
-def generate_theme_style(bg_color, text_color, border_color, button_hover_color, button_pressed_color,
-                         scrollbar_handle_color, scrollbar_handle_hover_color, line_color):
+def generate_theme_style(
+    bg_color,
+    text_color,
+    border_color,
+    button_hover_color,
+    button_pressed_color,
+    scrollbar_handle_color,
+    scrollbar_handle_hover_color,
+    line_color,
+):
     return f"""
     QWidget {{
         background-color: {bg_color};
@@ -82,7 +90,7 @@ def generate_theme_style(bg_color, text_color, border_color, button_hover_color,
     QScrollBar:vertical {{
         border: none;
         background: {bg_color};
-        width: 2px;
+        width: 4px;
         margin: 15px 0 15px 0;
         border-radius: 0px;
     }}
@@ -109,16 +117,56 @@ def generate_theme_style(bg_color, text_color, border_color, button_hover_color,
     """
 
 
-warm_theme_style = generate_theme_style("#1F2937", "#F1FAEE", "#E07A5F", "#E07A5F", "#D62828", "#E07A5F", "#D62828",
-                                        "#E07A5F")
-dark_monokai_theme_style = generate_theme_style("#272822", "#F8F8F2", "#F8F8F2", "#75715E", "#49483E", "#75715E",
-                                                "#49483E", "#F8F8F2")
-gruvbox_theme_style = generate_theme_style("#282828", "#EBDBB2", "#EBDBB2", "#504945", "#665C54", "#504945", "#665C54",
-                                           "#EBDBB2")
-light_theme_style = generate_theme_style("#FFFFFF", "#000000", "#000000", "#C0C0C0", "#808080", "#888", "#555",
-                                         "#000000")
-dark_theme_style = generate_theme_style("#2b2b2b", "#a9b7c6", "#214283", "#4e5b6e", "#214283", "#888", "#555",
-                                        "#214283")
+warm_theme_style = generate_theme_style(
+    "#1F2937",
+    "#F1FAEE",
+    "#E07A5F",
+    "#E07A5F",
+    "#D62828",
+    "#E07A5F",
+    "#D62828",
+    "#E07A5F",
+)
+dark_monokai_theme_style = generate_theme_style(
+    "#272822",
+    "#F8F8F2",
+    "#F8F8F2",
+    "#75715E",
+    "#49483E",
+    "#75715E",
+    "#49483E",
+    "#F8F8F2",
+)
+gruvbox_theme_style = generate_theme_style(
+    "#282828",
+    "#EBDBB2",
+    "#EBDBB2",
+    "#504945",
+    "#665C54",
+    "#504945",
+    "#665C54",
+    "#EBDBB2",
+)
+light_theme_style = generate_theme_style(
+    "#FFFFFF",
+    "#000000",
+    "#000000",
+    "#C0C0C0",
+    "#808080",
+    "#888",
+    "#555",
+    "#000000",
+)
+dark_theme_style = generate_theme_style(
+    "#2b2b2b",
+    "#a9b7c6",
+    "#214283",
+    "#4e5b6e",
+    "#214283",
+    "#888",
+    "#555",
+    "#214283",
+)
 
 
 class Worker(QThread):
@@ -160,7 +208,7 @@ def wrap_code_blocks(message):
     code_block = "```"
     block_pairs = message.split(code_block)
     for i in range(1, len(block_pairs), 2):
-        block_pairs[i] = f'<pre>{block_pairs[i]}</pre>'
+        block_pairs[i] = f"<pre>{block_pairs[i]}</pre>"
     return code_block.join(block_pairs)
 
 
@@ -189,9 +237,6 @@ class ChatGUI(QWidget):
         self.populate_model_dropdown(self.model_dropdown.currentText())
 
     def init_ui(self):
-        main_layout = QHBoxLayout(self)
-        splitter = QSplitter()
-
         chat_layout = QVBoxLayout()
         self.messages_text = QTextEdit(self)
         self.messages_text.setObjectName("messages_text")
@@ -231,11 +276,6 @@ class ChatGUI(QWidget):
 
         chat_layout.addLayout(button_layout)
 
-        chat_area = QScrollArea()
-        chat_area.setLayout(chat_layout)
-        chat_area.setWidgetResizable(True)
-        splitter.addWidget(chat_area)
-
         settings_layout = QVBoxLayout()
 
         self.api_dropdown = QComboBox(self)
@@ -248,8 +288,9 @@ class ChatGUI(QWidget):
         self.base_url_field = QLineEdit(self)
         self.base_url_field.setText(self.chatgpt_client.globals.base_url)
         self.base_url_field.editingFinished.connect(self.update_base_url)
-        settings_layout.addWidget(ql := QLabel(
-            "Base URL (<a href=\"https://rentry.org/desudeliveryservice\">find URLs</a>):"))
+        settings_layout.addWidget(
+            ql := QLabel('Base URL (<a href="https://rentry.org/desudeliveryservice">find URLs</a>):')
+        )
         ql.setOpenExternalLinks(True)
         settings_layout.addWidget(self.base_url_field)
 
@@ -335,16 +376,31 @@ class ChatGUI(QWidget):
         self.save_settings_button.clicked.connect(self.save_settings_to_disk)
         settings_layout.addWidget(self.save_settings_button)
 
-        settings_area = QScrollArea(self)
+        # Chat history + input box
+        chat_area = QWidget()
+        chat_area.setLayout(chat_layout)
+
+        # Chat settings
+        setting_widget = QWidget()
+        setting_widget.setLayout(settings_layout)
+        settings_area = QScrollArea()
+        settings_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         settings_area.setWidgetResizable(True)
+        settings_area.setWidget(setting_widget)
 
-        settings_area.setLayout(settings_layout)
-
+        # Splitter
+        splitter = QSplitter()
+        # Left tab
+        splitter.addWidget(chat_area)
+        # Right tab
         splitter.addWidget(settings_area)
-
-        self.setLayout(main_layout)
-        main_layout.addWidget(splitter)
         splitter.setSizes([300, 100])
+
+        main_layout = QHBoxLayout(self)
+        main_layout.addWidget(splitter)
+        self.setLayout(main_layout)
+
+        self.setMinimumSize(600, 400)
 
         self.api_dropdown.setCurrentText(self.chatgpt_client.globals.api_type)
 
@@ -385,10 +441,7 @@ class ChatGUI(QWidget):
             base_url=self.base_url_field.text(),
             selected_model=self.model_dropdown.currentText(),
             theme=self.theme_dropdown.currentText(),
-            model_names=[
-                self.model_dropdown.itemText(item)
-                for item in range(self.model_dropdown.count())
-            ],
+            model_names=[self.model_dropdown.itemText(item) for item in range(self.model_dropdown.count())],
             selected_preset=self.preset_dropdown.currentText(),
             verbose=False,
             md2html=self.format_md_checkbox.isChecked(),
@@ -412,13 +465,8 @@ class ChatGUI(QWidget):
         if self.chatgpt_client.globals.md2html:
             message = str(markdown2.markdown(message, safe_mode=False))
         else:
-            message = (
-                message
-                .replace('<', '&lt;')
-                .replace('>', '&gt;')
-                .replace('\n', '<br>')
-            )
-        message = message.replace('&quot;', '"')
+            message = message.replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
+        message = message.replace("&quot;", '"')
 
         message = highlight_quoted_text(message, color="gray")
         message = wrap_code_blocks(message)
@@ -426,7 +474,7 @@ class ChatGUI(QWidget):
         message = message.replace(
             html_role,
             f'<div style="font-size: 20px; border-bottom: 1px solid gray;"><b>{datetime.datetime.now().strftime("%H:%M")}</b>: {role}</div>',
-            1
+            1,
         )
         return message
 
@@ -438,10 +486,11 @@ class ChatGUI(QWidget):
         if preset_name in self.chatgpt_client.presets:
             if self.chatgpt_client.chat_history:
                 reply = QMessageBox.question(
-                    self, 'New Conversation',
-                    'Changing the preset will start a new conversation. Continue?',
+                    self,
+                    "New Conversation",
+                    "Changing the preset will start a new conversation. Continue?",
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                    QMessageBox.StandardButton.No
+                    QMessageBox.StandardButton.No,
                 )
                 if reply == QMessageBox.StandardButton.Yes:
                     self.clear_history()
@@ -478,7 +527,7 @@ class ChatGUI(QWidget):
         )
 
     def add_preset(self):
-        new_preset_name, ok = QInputDialog.getText(self, 'Add Preset', 'Enter preset name:')
+        new_preset_name, ok = QInputDialog.getText(self, "Add Preset", "Enter preset name:")
         if ok and new_preset_name:
             self.chatgpt_client.presets[new_preset_name] = self._get_current_preset_from_gui()
             self.preset_dropdown.addItem(new_preset_name)
@@ -489,8 +538,8 @@ class ChatGUI(QWidget):
         self.model_dropdown.clear()
         if self.chatgpt_client.globals.api_type == "gpt4free":
             self.chatgpt_client.globals.model_names = [
-                'gpt-3.5-turbo-16k',
-                'gpt-4-turbo',
+                "gpt-3.5-turbo-16k",
+                "gpt-4-turbo",
             ]
             self.model_dropdown.addItems(self.chatgpt_client.globals.model_names)
         elif self.chatgpt_client.globals.api_type == "URL_JSON_API":
@@ -536,15 +585,15 @@ class ChatGUI(QWidget):
         event.accept()
 
 
-def main(chatgpt_client: ChatGPTClient | None = None):
+def show_window(chatgpt_client: ChatGPTClient | None = None):
     app = QApplication(sys.argv)
     app.setStyleSheet(warm_theme_style)  # DEFAULT THEME
     chat_gui = ChatGUI(chatgpt_client or ChatGPTClient(), app)
-    chat_gui.setWindowTitle("4rp")
+    chat_gui.setWindowTitle(PROGRAM_NAME)
     chat_gui.setGeometry(100, 100, 400, 600)
     chat_gui.show()
     sys.exit(app.exec())
 
 
 if __name__ == "__main__":
-    main()
+    show_window()
