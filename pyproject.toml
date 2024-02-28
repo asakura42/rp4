@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "4rp"
+version = "0.0.1"
+dependencies = [
+    "g4f",
+    "requests",
+    "markdown2",
+    "pyqt6",
+]
