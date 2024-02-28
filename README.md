@@ -10,6 +10,10 @@ simple python replacement for the bloated LLM frontends
 pipx install 'git+https://github.com/asakura42/4rp.git'
 ```
 
+```bash
+pipx install rp4
+```
+
 ## Usage
 
 ```bash
