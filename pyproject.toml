@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "4rp"
+name = "rp4"
 version = "0.0.1"
 authors = [
     { name = "Ren Tatsumoto" },
@@ -24,4 +24,4 @@ classifiers = [
 ]
 
 [project.scripts]
-4rp = "4rp.__main__:main"
+rp4 = "rp4.__main__:main"

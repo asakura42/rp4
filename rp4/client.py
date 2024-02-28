@@ -8,6 +8,8 @@ from pprint import pprint
 import g4f
 import requests
 
+PROGRAM_NAME = "rp4"
+
 
 @dataclasses.dataclass
 class GlobalSettings:
@@ -62,7 +64,7 @@ class ChatGPTClient:
     def deploy_default_configs(self):
         default_config_dir = pathlib.Path(__file__).parent / "defaults"
         assert default_config_dir.is_dir()
-        config_home_dir = pathlib.Path.home() / ".config" / "4rp"
+        config_home_dir = pathlib.Path.home() / ".config" / PROGRAM_NAME
         if not self.globals_file_path:
             self.globals_file_path = config_home_dir / "global_settings.json"
         if not self.presets_file_path:
