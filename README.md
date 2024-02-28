@@ -6,12 +6,23 @@ simple python replacement for the bloated LLM frontends
 
 ## Installation
 
+### Install from PyPI.
+
+```bash
+pipx install rp4
+```
+
+### Install from GitHub.
+
 ```bash
 pipx install 'git+https://github.com/asakura42/4rp.git'
 ```
 
+### Clone and install.
+
 ```bash
-pipx install rp4
+git clone ...
+pipx install -e .
 ```
 
 ## Usage
