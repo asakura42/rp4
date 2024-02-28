@@ -189,9 +189,6 @@ class ChatGUI(QWidget):
         self.populate_model_dropdown(self.model_dropdown.currentText())
 
     def init_ui(self):
-        main_layout = QHBoxLayout(self)
-        splitter = QSplitter()
-
         chat_layout = QVBoxLayout()
         self.messages_text = QTextEdit(self)
         self.messages_text.setObjectName("messages_text")
@@ -230,11 +227,6 @@ class ChatGUI(QWidget):
         button_layout.addWidget(self.clear_history_button)
 
         chat_layout.addLayout(button_layout)
-
-        chat_area = QScrollArea()
-        chat_area.setLayout(chat_layout)
-        chat_area.setWidgetResizable(True)
-        splitter.addWidget(chat_area)
 
         settings_layout = QVBoxLayout()
 
@@ -335,16 +327,31 @@ class ChatGUI(QWidget):
         self.save_settings_button.clicked.connect(self.save_settings_to_disk)
         settings_layout.addWidget(self.save_settings_button)
 
-        settings_area = QScrollArea(self)
+        # Chat history + input box
+        chat_area = QWidget()
+        chat_area.setLayout(chat_layout)
+
+        # Chat settings
+        setting_widget = QWidget()
+        setting_widget.setLayout(settings_layout)
+        settings_area = QScrollArea()
+        settings_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         settings_area.setWidgetResizable(True)
+        settings_area.setWidget(setting_widget)
 
-        settings_area.setLayout(settings_layout)
-
+        # Splitter
+        splitter = QSplitter()
+        # Left tab
+        splitter.addWidget(chat_area)
+        # Right tab
         splitter.addWidget(settings_area)
-
-        self.setLayout(main_layout)
-        main_layout.addWidget(splitter)
         splitter.setSizes([300, 100])
+
+        main_layout = QHBoxLayout(self)
+        main_layout.addWidget(splitter)
+        self.setLayout(main_layout)
+
+        self.setMinimumSize(600, 400)
 
         self.api_dropdown.setCurrentText(self.chatgpt_client.globals.api_type)
 
