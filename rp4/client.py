@@ -83,14 +83,14 @@ class ChatGPTClient:
 
     def load_global_settings(self):
         try:
-            with open(self.globals_file_path, "r") as f:
+            with open(self.globals_file_path) as f:
                 self.globals = dataclasses.replace(self.globals, **json.load(f))
         except FileNotFoundError:
             print("Global settings file is not found.")
 
     def load_presets(self):
         try:
-            with open(self.presets_file_path, "r") as f:
+            with open(self.presets_file_path) as f:
                 self.presets = {preset_name: Preset(**data) for preset_name, data in json.load(f).items()}
         except FileNotFoundError:
             print("Presets settings file is not found.")

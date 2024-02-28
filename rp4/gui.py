@@ -217,7 +217,7 @@ class Worker(QThread):
 class UserMsgForm(QTextEdit):
     sendPressed = pyqtSignal()
 
-    def keyPressEvent(self, event: Optional[QKeyEvent]):
+    def keyPressEvent(self, event: QKeyEvent | None):
         if event.key() == Qt.Key.Key_Return and event.modifiers() == Qt.KeyboardModifier.ControlModifier:
             self.sendPressed.emit()
         else:
