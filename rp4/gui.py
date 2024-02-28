@@ -385,6 +385,7 @@ class ChatGUI(QWidget):
         setting_widget.setLayout(settings_layout)
         settings_area = QScrollArea()
         settings_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        settings_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         settings_area.setWidgetResizable(True)
         settings_area.setWidget(setting_widget)
 
