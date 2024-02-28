@@ -22,9 +22,15 @@ rp4 --gui
 
 The program uses [https://github.com/xtekky/gpt4free](gpt4free) library or your own OpenAI-compatible completions API.
 
-This program was written for the my own use and is still in development, so it may not always work the way the user expects. For example, if the model does not change, simply close and reopen the program. To delete preset, edit file `settings.json` manually.
+This program was written for the own use and is still in development,
+so it may not always work the way the user expects.
+For example, if the model does not change, simply close and reopen the program.
 
-TODO:
+## Configuration
+
+Config files are stored in `~/.config/rp4`.
+
+## TODO
 - various quotes handling
 - aicg proxy parsing (do I really need it?)
 
