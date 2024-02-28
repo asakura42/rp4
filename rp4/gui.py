@@ -114,6 +114,34 @@ def generate_theme_style(
         border: none;
         background: none;
     }}
+
+    QScrollBar:horizontal {{
+        border: none;
+        background: {bg_color};
+        height: 4px;
+        margin: 0 15px 0 15px;
+        border-radius: 0px;
+    }}
+
+    QScrollBar::handle:horizontal {{
+        background-color: {scrollbar_handle_color};
+        min-width: 50px;
+        border-radius: 1px;
+    }}
+
+    QScrollBar::handle:horizontal:hover{{
+        background-color: {scrollbar_handle_hover_color};
+    }}
+
+    QScrollBar::add-line:horizontal {{
+        border: none;
+        background: none;
+    }}
+
+    QScrollBar::sub-line:horizontal {{
+        border: none;
+        background: none;
+    }}
     """
 
 
