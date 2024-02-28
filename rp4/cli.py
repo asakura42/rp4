@@ -1,10 +1,12 @@
 import argparse
 
-from rp4.gui import show_window
 from rp4.client import ChatGPTClient
+from rp4.desktop_shortcut import setup_shortcut
+from rp4.gui import show_window
 
 
 def main():
+    setup_shortcut()
     parser = argparse.ArgumentParser(description="CLI interface.", usage="Send messages to the server.")
     parser.add_argument("--fetch-models", dest="fetch_models", action="store_true", help="Fetch models")
     parser.add_argument("--list-presets", dest="print_presets", action="store_true", help="List presets.")
@@ -28,7 +30,9 @@ def main():
         case argparse.Namespace() if args.ask_question:
             return print(
                 client.send_message(
-                    args.ask_question, (args.set_preset or client.globals.selected_preset), args.model_name
+                    args.ask_question,
+                    (args.set_preset or client.globals.selected_preset),
+                    args.model_name,
                 )
             )
         case argparse.Namespace(launch_gui=True):
