@@ -1,17 +1,19 @@
-# 4rp
+# rp4
+
 simple python replacement for the bloated LLM frontends
 
 4rp */fourp/* is a simple and minimalist LLM frontend initially written in a few days, not without the help of LLMs.
 
-To install:
+## Installation
 
 ```bash
-git clone https://github.com/asakura42/4rp
-cd 4rp
-python -m venv venv
-source venv/bin/activate
-pip install g4f requests markdown2 pyqt5
-python 4rp.py
+pipx install 'git+https://github.com/asakura42/4rp.git'
+```
+
+## Usage
+
+```bash
+rp4 --gui
 ```
 
 The program uses [https://github.com/xtekky/gpt4free](gpt4free) library or your own OpenAI-compatible completions API.
