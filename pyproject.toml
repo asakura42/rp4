@@ -5,9 +5,23 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "4rp"
 version = "0.0.1"
+authors = [
+    { name = "Ren Tatsumoto" },
+    { name = "asakura42" },
+]
+description = "Simple python replacement for the bloated LLM frontends."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "GPL-3"}
 dependencies = [
     "g4f",
     "requests",
     "markdown2",
     "pyqt6",
 ]
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+
+[project.scripts]
+4rp = "4rp.__main__:main"
