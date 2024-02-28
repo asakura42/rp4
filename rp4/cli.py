@@ -1,7 +1,7 @@
 import argparse
 
-import gui
-from client import ChatGPTClient
+from rp4.gui import show_window
+from rp4.client import ChatGPTClient
 
 
 def main():
@@ -32,7 +32,7 @@ def main():
                 )
             )
         case argparse.Namespace(launch_gui=True):
-            return gui.main(client)
+            return show_window(client)
         case _:
             return parser.print_help()
 

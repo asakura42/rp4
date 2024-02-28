@@ -7,7 +7,7 @@ from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import *
 
-from client import ChatGPTClient, Preset, FetchError, GlobalSettings, PROGRAM_NAME
+from rp4.client import ChatGPTClient, Preset, FetchError, GlobalSettings, PROGRAM_NAME
 
 
 def generate_theme_style(
@@ -585,7 +585,7 @@ class ChatGUI(QWidget):
         event.accept()
 
 
-def main(chatgpt_client: ChatGPTClient | None = None):
+def show_window(chatgpt_client: ChatGPTClient | None = None):
     app = QApplication(sys.argv)
     app.setStyleSheet(warm_theme_style)  # DEFAULT THEME
     chat_gui = ChatGUI(chatgpt_client or ChatGPTClient(), app)
@@ -596,4 +596,4 @@ def main(chatgpt_client: ChatGPTClient | None = None):
 
 
 if __name__ == "__main__":
-    main()
+    show_window()
