@@ -2,7 +2,7 @@
 
 simple python replacement for the bloated LLM frontends
 
-4rp */fourp/* is a simple and minimalist LLM frontend initially written in a few days, not without the help of LLMs.
+rp4 */fourp/* is a simple and minimalist LLM frontend initially written in a few days, not without the help of LLMs.
 
 ## Installation
 
@@ -15,7 +15,7 @@ pipx install rp4
 ### Install from GitHub.
 
 ```bash
-pipx install 'git+https://github.com/asakura42/4rp.git'
+pipx install 'git+https://github.com/asakura42/rp4.git'
 ```
 
 ### Clone and install.
