@@ -63,7 +63,7 @@ class ChatGPTClient:
 
     def deploy_default_configs(self):
         default_config_dir = pathlib.Path(__file__).parent / "defaults"
-        assert default_config_dir.is_dir()
+        assert default_config_dir.is_dir(), "default config dir must exist"
         config_home_dir = pathlib.Path.home() / ".config" / PROGRAM_NAME
         if not self.globals_file_path:
             self.globals_file_path = config_home_dir / "global_settings.json"
