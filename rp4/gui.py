@@ -317,7 +317,9 @@ class ChatGUI(QWidget):
         self.base_url_field.setText(self.chatgpt_client.globals.base_url)
         self.base_url_field.editingFinished.connect(self.update_base_url)
         settings_layout.addWidget(
-            ql := QLabel('Base URL (<a href="https://rentry.org/desudeliveryservice">find URLs</a>):')
+            ql := QLabel(
+                'Base URL (<a style="color: royalblue;" href="https://rentry.org/desudeliveryservice">find URLs</a>):'
+            )
         )
         ql.setOpenExternalLinks(True)
         settings_layout.addWidget(self.base_url_field)
