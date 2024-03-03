@@ -2,7 +2,7 @@
 
 simple python replacement for the bloated LLM frontends
 
-rp4 */fourp/* is a simple and minimalist LLM frontend initially written in a few days, not without the help of LLMs.
+rp4 is a simple and minimalist LLM frontend initially written in a few days, not without the help of LLMs.
 
 ## Installation
 
@@ -17,6 +17,8 @@ pipx install rp4
 ```bash
 pipx install 'git+https://github.com/asakura42/rp4.git'
 ```
+
+To update, pass `--force` to `pipx install`.
 
 ### Clone and install.
 
@@ -41,12 +43,8 @@ For example, if the model does not change, simply close and reopen the program.
 
 Config files are stored in `~/.config/rp4`.
 
-## TODO
-- various quotes handling
-- aicg proxy parsing (do I really need it?)
-
 Any improvements, issues, thoughts and pull requests will be appreciated.
 
-===
+## Characters
 
-*Gabriela from settings.json example taken from https://www.chub.ai/characters/summernon/practice-spanish-with-gabriela*
+You can find community characters at https://chub.ai
