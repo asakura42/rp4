@@ -25,3 +25,7 @@ classifiers = [
 
 [project.scripts]
 rp4 = "rp4.__main__:main"
+
+[tool.black]
+line-length = 120
+target-version = ['py311']
