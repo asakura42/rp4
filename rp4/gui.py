@@ -490,7 +490,7 @@ class ChatGUI(QWidget):
             theme=self.theme_dropdown.currentText(),
             model_names=[self.model_dropdown.itemText(item) for item in range(self.model_dropdown.count())],
             selected_preset=self.preset_dropdown.currentText(),
-            verbose=False,
+            verbose=self.chatgpt_client.globals.verbose,  # echo back
             md2html=self.format_md_checkbox.isChecked(),
             max_tokens=self.max_tokens_spinbox.value(),
             temperature=self.temperature_spinbox.value(),
