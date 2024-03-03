@@ -23,6 +23,8 @@ class GlobalSettings:
     selected_preset: str = ""
     timeout_sec: int = 180
     md2html: bool = True
+    max_tokens: int = 1000
+    temperature: float = 0.9
 
 
 @dataclasses.dataclass
@@ -139,9 +141,9 @@ class ChatGPTClient:
             data = {
                 "model": (model_name or self.globals.selected_model),
                 "messages": self.chat_history,
-                "max_tokens": 1000,
+                "max_tokens": self.globals.max_tokens,
                 "frequency_penalty": 0.7,
-                "temperature": 0.9,
+                "temperature": self.globals.temperature,
                 "presence_penalty": 0.7,
                 "top_p": 1,
                 "stream": True,
