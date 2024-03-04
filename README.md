@@ -6,7 +6,7 @@ rp4 is a simple and minimalist LLM frontend initially written in a few days, not
 
 ## Installation
 
-### Install from PyPI.
+### Install from [PyPI](https://pypi.org/project/rp4/).
 
 ```bash
 pipx install rp4
