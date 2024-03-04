@@ -350,6 +350,22 @@ class ChatGUI(QWidget):
         self.format_md_checkbox.setChecked(self.chatgpt_client.globals.md2html)
         settings_layout.addWidget(self.format_md_checkbox)
 
+        # Max tokens and temperature
+        self.max_tokens_spinbox = QSpinBox()
+        self.max_tokens_spinbox.setRange(1, 9999)
+        self.max_tokens_spinbox.setValue(self.chatgpt_client.globals.max_tokens)
+        self.temperature_spinbox = QDoubleSpinBox()
+        self.temperature_spinbox.setRange(0, 1)
+        self.temperature_spinbox.setSingleStep(0.1)
+        self.temperature_spinbox.setDecimals(1)
+        self.temperature_spinbox.setValue(self.chatgpt_client.globals.temperature)
+        hbox = QHBoxLayout()
+        hbox.addWidget(QLabel("Max tokens"))
+        hbox.addWidget(self.max_tokens_spinbox)
+        hbox.addWidget(QLabel("Temperature"))
+        hbox.addWidget(self.temperature_spinbox)
+        settings_layout.addLayout(hbox)
+
         # HR
         hline = QFrame(self)
         hline.setObjectName("line")
@@ -474,8 +490,10 @@ class ChatGUI(QWidget):
             theme=self.theme_dropdown.currentText(),
             model_names=[self.model_dropdown.itemText(item) for item in range(self.model_dropdown.count())],
             selected_preset=self.preset_dropdown.currentText(),
-            verbose=False,
+            verbose=self.chatgpt_client.globals.verbose,  # echo back
             md2html=self.format_md_checkbox.isChecked(),
+            max_tokens=self.max_tokens_spinbox.value(),
+            temperature=self.temperature_spinbox.value(),
         )
 
     def sync_settings_with_backend(self):
