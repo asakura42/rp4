@@ -1,6 +1,5 @@
 import datetime
 import sys
-from typing import Optional
 
 import markdown2
 from PyQt6.QtCore import QThread, pyqtSignal, Qt
@@ -600,8 +599,10 @@ class ChatGUI(QWidget):
                 print(ex)
         self.model_dropdown.setCurrentText(selected_model)
 
-    def send_message(self):
+    def send_message(self) -> None:
         user_message = self.user_message.toPlainText()
+        if not user_message:
+            return
 
         self.sync_settings_with_backend()
 
